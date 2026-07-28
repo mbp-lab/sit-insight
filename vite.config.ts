@@ -8,7 +8,7 @@ export default defineConfig({
     server: {
         host: true,
         port: 2346,
-        allowedHosts: ['sit-insight.com', 'www.sit-insight.com', 'localhost', 'www.sit.uarslan.com', 'sit.uarslan.com', '10.0.140.169', 'sitv1.uarslan.com', 'www.sitv1.uarslan.com'],
+        allowedHosts: ['sit-insight.com', 'www.sit-insight.com', 'localhost', '10.0.140.169']
     },
   plugins: [
     // The React and Tailwind plugins are both required for Make, even if
