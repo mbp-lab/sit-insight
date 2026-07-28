@@ -39,13 +39,17 @@ import headAscExample from '../data/images/head-asc.svg';
 import headWithoutAscExample from '../data/images/head-without-asc.svg';
 import appLogo from '../data/images/logo.png';
 import { modalityData } from '../data/modalityData';
-import { LanguageSwitcher } from './components/LanguageSwitcher';
+// import { LanguageSwitcher } from './components/LanguageSwitcher';
 
-// --- Pipeline JSON Data Imports for 67869 (copy for all patients) ---
+// --- Pipeline JSON Data Imports ---
 import screeningResult_67869 from '../../website_data/case_67869/screening_result.json';
 import multilabelConditionOutputs_67869 from '../../website_data/case_67869/multilabel_condition_outputs.json';
 import modalityOutputs_67869 from '../../website_data/case_67869/modality_outputs.json';
 import patientDeviations_67869 from '../../website_data/case_67869/patient_deviation_tables.json';
+import screeningResult_52160 from '../../website_data/case_52160/screening_result.json';
+import multilabelConditionOutputs_52160 from '../../website_data/case_52160/multilabel_condition_outputs.json';
+import modalityOutputs_52160 from '../../website_data/case_52160/modality_outputs.json';
+import patientDeviations_52160 from '../../website_data/case_52160/patient_deviation_tables.json';
 
 
 interface PatientData {
@@ -57,6 +61,7 @@ interface PatientData {
 }
 
 const caseId1 = import.meta.env.VITE_PATIENT_CASE_1 || 'case_67869';
+const caseId2 = import.meta.env.VITE_PATIENT_CASE_2 || 'case_52160';
 
 const PATIENTS: Record<string, PatientData> = {
   [caseId1]: {
@@ -66,10 +71,18 @@ const PATIENTS: Record<string, PatientData> = {
     modalityOutputs: modalityOutputs_67869,
     patientDeviations: patientDeviations_67869,
   },
+  [caseId2]: {
+    caseId: caseId2,
+    screeningResult: screeningResult_52160,
+    multilabelConditionOutputs: multilabelConditionOutputs_52160,
+    modalityOutputs: modalityOutputs_52160,
+    patientDeviations: patientDeviations_52160,
+  },
 };
 
 const PATIENT_TOKENS: Record<string, string> = {
   [import.meta.env.VITE_PATIENT_TOKEN_1 || 'your_patient_token_1']: caseId1,
+  [import.meta.env.VITE_PATIENT_TOKEN_2 || 'your_patient_token_2']: caseId2,
 };
 
 import referenceGroupStats from '../../website_data/reference/reference_group_stats.json';
@@ -1276,6 +1289,24 @@ const DataModalityView = ({
       );
     };
 
+    const getGroupMedianN = (featureId: string, groupKey: string) => {
+      const stat = (referenceGroupStats as any).statistics.find((s: any) =>
+        s.feature_id === featureId &&
+        s.reference_group === groupKey &&
+        s.gender_context === gender
+      );
+      return stat ? { median: stat.median, n: stat.valid_n } : null;
+    };
+
+    const getPairwiseHeaderLabel = (featureId: string, groupKey: string, groupLabel: string) => {
+      const stats = getGroupMedianN(featureId, groupKey);
+      return t('facialView.pairwiseHeaderTemplate', {
+        group: groupLabel,
+        median: stats ? stats.median.toFixed(2) : '–',
+        n: stats ? stats.n : '–',
+      });
+    };
+
     return (
       <div className="space-y-6">
         {renderFilters()}
@@ -1477,11 +1508,11 @@ const DataModalityView = ({
                     <th className="p-3 text-left font-semibold">
                       {t('facialView.pairwiseFeaturePrefix')} {activeFeatureLabel}
                     </th>
-                    <th className="p-3 text-center font-semibold">{t('facialView.pairwiseControlHeader')}</th>
-                    <th className="p-3 text-center font-semibold">{t('facialView.pairwiseAscHeader')}</th>
-                    <th className="p-3 text-center font-semibold">{t('facialView.pairwiseAdhdHeader')}</th>
-                    <th className="p-3 text-center font-semibold">{t('facialView.pairwiseSadHeader')}</th>
-                    <th className="p-3 text-center font-semibold">{t('facialView.pairwiseDepressionHeader')}</th>
+                    {groupKeys.map((colKey, colIndex) => (
+                      <th key={colKey} className="p-3 text-center font-semibold">
+                        {getPairwiseHeaderLabel(activeFeature, colKey, groupLabels[colIndex])}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
@@ -1595,6 +1626,24 @@ const DataModalityView = ({
           <div className="text-[10px] text-gray-500">{esStr}</div>
         </div>
       );
+    };
+
+    const getGroupMedianN = (featureId: string, groupKey: string) => {
+      const stat = (referenceGroupStats as any).statistics.find((s: any) =>
+        s.feature_id === featureId &&
+        s.reference_group === groupKey &&
+        s.gender_context === gender
+      );
+      return stat ? { median: stat.median, n: stat.valid_n } : null;
+    };
+
+    const getPairwiseHeaderLabel = (featureId: string, groupKey: string, groupLabel: string) => {
+      const stats = getGroupMedianN(featureId, groupKey);
+      return t('facialView.pairwiseHeaderTemplate', {
+        group: groupLabel,
+        median: stats ? stats.median.toFixed(2) : '–',
+        n: stats ? stats.n : '–',
+      });
     };
 
     const leftLabel = t('learning.prototypeAscLabel');
@@ -1815,11 +1864,11 @@ const DataModalityView = ({
                   <th className="p-3 text-left font-semibold">
                     {t('facialView.pairwiseFeaturePrefix')} {activeFeatureLabel}
                   </th>
-                  <th className="p-3 text-center font-semibold">{t('facialView.pairwiseControlHeader')}</th>
-                  <th className="p-3 text-center font-semibold">{t('facialView.pairwiseAscHeader')}</th>
-                  <th className="p-3 text-center font-semibold">{t('facialView.pairwiseAdhdHeader')}</th>
-                  <th className="p-3 text-center font-semibold">{t('facialView.pairwiseSadHeader')}</th>
-                  <th className="p-3 text-center font-semibold">{t('facialView.pairwiseDepressionHeader')}</th>
+                  {groupKeys.map((colKey, colIndex) => (
+                    <th key={colKey} className="p-3 text-center font-semibold">
+                      {getPairwiseHeaderLabel(activeFeature, colKey, groupLabels[colIndex])}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -2205,7 +2254,7 @@ export default function App() {
               </div>
             </>
           )}
-          <LanguageSwitcher />
+          {/* <LanguageSwitcher /> */}
         </div>
       </header>
 

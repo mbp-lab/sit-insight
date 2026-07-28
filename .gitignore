@@ -147,6 +147,8 @@ thesis/pdfs_txt/
 # Local TLS certificate storage (never commit private keys)
 .secrets/
 
-# Patient case folders
-# website_data/case_*
-# website_data/assets/case_*
+# Patient case folders - only case_67869 is tracked, all other cases are ignored
+website_data/case_*
+!website_data/case_67869
+website_data/assets/case_*
+!website_data/assets/case_67869

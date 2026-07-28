@@ -352,11 +352,7 @@ export default {
     pairwiseFeaturePrefix: "Feature:",
     pairwiseTestTypeLabel: "Test type",
     pairwiseTestTypeValue: "Mann-Whitney",
-    pairwiseControlHeader: "Control (Median = 80, Sample size = 80)",
-    pairwiseAscHeader: "ASC (Median = 80, Sample size = 80)",
-    pairwiseAdhdHeader: "ADHD (Median = 80, Sample size = 80)",
-    pairwiseSadHeader: "Social anxiety (Median = 80, Sample size = 80)",
-    pairwiseDepressionHeader: "Depression (Median = 80, Sample size = 80)",
+    pairwiseHeaderTemplate: "{{group}} (Median = {{median}}, Sample size = {{n}})",
     pairwiseCellValue: "U = 285; p=0.01",
     groupLabels: {
       control: "Control",
