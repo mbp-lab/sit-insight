@@ -1,6 +1,6 @@
 # SIT-Insight
 
-This repository contains the source code for SIT-Insight, a tool developed as part of the master's thesis of Umut Arslan.
+This repository contains the source code for SIT-Insight.
 
 - **Live Demo Page:** [https://sit-insight.com](https://sit-insight.com)
 
