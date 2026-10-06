@@ -78,6 +78,7 @@ import pairwiseGroupComparisons from '../../website_data/reference/pairwise_grou
 import prototypicalCases from '../../website_data/learning/prototypical_cases.json';
 import learningStatistics from '../../website_data/learning/learning_statistics.json';
 import featureDictionary from '../../website_data/metadata/feature_dictionary.json';
+import modelConfig from '../../website_data/metadata/model_config.json';
 
 import {
   Select,
@@ -645,6 +646,7 @@ const ScreeningView = ({ patientData, onInspectMeasurements }: {
   const modalityOutputs = patientData?.modalityOutputs;
   const { t } = useTranslation();
   const thresholdStrategy = 'high_sensitivity';
+  const targetSensitivity = modelConfig.min_sensitivity * 100;
 
   const score = screeningResult?.asc_screening_score;
   const selectedThresholdData = screeningResult?.thresholds?.[thresholdStrategy];
@@ -726,7 +728,7 @@ const ScreeningView = ({ patientData, onInspectMeasurements }: {
                       </button>
                     </TooltipTrigger>
                     <TooltipContent className="bg-black text-white border border-white/10 max-w-xs text-xs">
-                      {t('screening.thresholdExplanationBody')}
+                      {t('screening.thresholdTooltip', { targetSensitivity })}
                     </TooltipContent>
                   </Tooltip>
                 </span>}
@@ -761,8 +763,8 @@ const ScreeningView = ({ patientData, onInspectMeasurements }: {
           <summary className="cursor-pointer text-sm font-bold text-gray-900">
             {t('screening.thresholdExplanationTitle')}
           </summary>
-          <p className="mt-3 text-sm text-gray-700 leading-relaxed">
-            {t('screening.thresholdExplanationBody')}
+          <p className="mt-3 text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+            {t('screening.thresholdExplanationBody', { targetSensitivity })}
           </p>
         </details>
 
