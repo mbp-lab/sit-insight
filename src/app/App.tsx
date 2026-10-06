@@ -39,17 +39,14 @@ import headAscExample from '../data/images/head-asc.svg';
 import headWithoutAscExample from '../data/images/head-without-asc.svg';
 import appLogo from '../data/images/logo.png';
 import { modalityData } from '../data/modalityData';
-// import { LanguageSwitcher } from './components/LanguageSwitcher';
+import { LearningOverview } from './components/LearningOverview';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
 
 // --- Pipeline JSON Data Imports ---
 import screeningResult_67869 from '../../website_data/case_67869/screening_result.json';
 import multilabelConditionOutputs_67869 from '../../website_data/case_67869/multilabel_condition_outputs.json';
 import modalityOutputs_67869 from '../../website_data/case_67869/modality_outputs.json';
 import patientDeviations_67869 from '../../website_data/case_67869/patient_deviation_tables.json';
-import screeningResult_52160 from '../../website_data/case_52160/screening_result.json';
-import multilabelConditionOutputs_52160 from '../../website_data/case_52160/multilabel_condition_outputs.json';
-import modalityOutputs_52160 from '../../website_data/case_52160/modality_outputs.json';
-import patientDeviations_52160 from '../../website_data/case_52160/patient_deviation_tables.json';
 
 
 interface PatientData {
@@ -61,7 +58,6 @@ interface PatientData {
 }
 
 const caseId1 = import.meta.env.VITE_PATIENT_CASE_1 || 'case_67869';
-const caseId2 = import.meta.env.VITE_PATIENT_CASE_2 || 'case_52160';
 
 const PATIENTS: Record<string, PatientData> = {
   [caseId1]: {
@@ -71,18 +67,10 @@ const PATIENTS: Record<string, PatientData> = {
     modalityOutputs: modalityOutputs_67869,
     patientDeviations: patientDeviations_67869,
   },
-  [caseId2]: {
-    caseId: caseId2,
-    screeningResult: screeningResult_52160,
-    multilabelConditionOutputs: multilabelConditionOutputs_52160,
-    modalityOutputs: modalityOutputs_52160,
-    patientDeviations: patientDeviations_52160,
-  },
 };
 
 const PATIENT_TOKENS: Record<string, string> = {
   [import.meta.env.VITE_PATIENT_TOKEN_1 || 'your_patient_token_1']: caseId1,
-  [import.meta.env.VITE_PATIENT_TOKEN_2 || 'your_patient_token_2']: caseId2,
 };
 
 import referenceGroupStats from '../../website_data/reference/reference_group_stats.json';
@@ -505,6 +493,8 @@ const ConfusionMatrix = ({ thresholdData }: { thresholdData: any }) => {
   const nNeg = thresholdData.n_negative_cases;
   const total = nPos + nNeg;
 
+  if (![sens, spec, nPos, nNeg].every((value) => typeof value === 'number' && Number.isFinite(value)) || total <= 0) return null;
+
   const tp = Math.round(sens * nPos);
   const fn = nPos - tp;
   const tn = Math.round(spec * nNeg);
@@ -516,7 +506,12 @@ const ConfusionMatrix = ({ thresholdData }: { thresholdData: any }) => {
   const tnPct = ((tn / total) * 100).toFixed(1) + '%';
 
   return (
-    <div className="border border-gray-100 rounded-lg overflow-hidden">
+    <div
+      className="border border-gray-100 rounded-lg overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
+      role="region"
+      aria-label={t('screening.modelPerformanceTitle')}
+      tabIndex={0}
+    >
       <table className="w-full text-sm">
         <thead>
           <tr className="bg-gray-50 text-gray-500">
@@ -527,25 +522,25 @@ const ConfusionMatrix = ({ thresholdData }: { thresholdData: any }) => {
         </thead>
         <tbody>
           <tr className="bg-teal-50/50">
-            <td className="p-4 font-medium text-gray-700">{t('confusionMatrix.aiRecommendsASC')}</td>
+            <td className="p-4 font-medium text-gray-700">{t('confusionMatrix.atOrAboveThreshold')}</td>
             <td className="p-4 text-center text-gray-600">
               <div className="font-bold">{tpPct}</div>
-              <div className="text-[10px] text-gray-400">({tp}/{nPos} True Positives)</div>
+              <div className="text-[10px] text-gray-400">({tp}/{nPos} {t('confusionMatrix.truePositives')})</div>
             </td>
             <td className="p-4 text-center text-gray-600">
               <div className="font-bold">{fpPct}</div>
-              <div className="text-[10px] text-gray-400">({fp}/{nNeg} False Positives)</div>
+              <div className="text-[10px] text-gray-400">({fp}/{nNeg} {t('confusionMatrix.falsePositives')})</div>
             </td>
           </tr>
           <tr className="bg-white">
-            <td className="p-4 font-medium text-gray-700">{t('confusionMatrix.aiRecommendsNoASC')}</td>
+            <td className="p-4 font-medium text-gray-700">{t('confusionMatrix.belowThreshold')}</td>
             <td className="p-4 text-center text-gray-600">
               <div className="font-bold">{fnPct}</div>
-              <div className="text-[10px] text-gray-400">({fn}/{nPos} False Negatives)</div>
+              <div className="text-[10px] text-gray-400">({fn}/{nPos} {t('confusionMatrix.falseNegatives')})</div>
             </td>
             <td className="p-4 text-center text-gray-600">
               <div className="font-bold">{tnPct}</div>
-              <div className="text-[10px] text-gray-400">({tn}/{nNeg} True Negatives)</div>
+              <div className="text-[10px] text-gray-400">({tn}/{nNeg} {t('confusionMatrix.trueNegatives')})</div>
             </td>
           </tr>
         </tbody>
@@ -637,18 +632,38 @@ const WelcomeView = ({
   );
 };
 
-const ScreeningView = ({ patientData }: { patientData: PatientData }) => {
-  const { screeningResult, modalityOutputs } = patientData;
+const ScreeningView = ({ patientData, onInspectMeasurements }: {
+  patientData: PatientData | null;
+  onInspectMeasurements: () => void;
+}) => {
+  const screeningResult = patientData?.screeningResult;
+  // Remove the confirmed boilerplate only; keep any other payload notes or warnings.
+  const screeningNote = screeningResult?.disclaimer?.replaceAll(
+    'Screening score is decision support only and must not be interpreted as a diagnosis.',
+    '',
+  ).trim();
+  const modalityOutputs = patientData?.modalityOutputs;
   const { t } = useTranslation();
   const thresholdStrategy = 'high_sensitivity';
 
-  const score = screeningResult.asc_screening_score;
-  const selectedThresholdData = screeningResult.thresholds[thresholdStrategy];
-  const thresholdVal = selectedThresholdData.selected_threshold;
-  const isAboveThreshold = score >= thresholdVal;
+  const score = screeningResult?.asc_screening_score;
+  const selectedThresholdData = screeningResult?.thresholds?.[thresholdStrategy];
+  const thresholdVal = selectedThresholdData?.selected_threshold;
+  const hasScore = typeof score === 'number' && Number.isFinite(score);
+  const hasThreshold = typeof thresholdVal === 'number' && Number.isFinite(thresholdVal);
+  const isAboveThreshold = hasScore && hasThreshold ? score >= thresholdVal : null;
 
-  const formattedScore = (score * 100).toFixed(1) + '%';
-  const formattedThreshold = (thresholdVal * 100).toFixed(0) + '%';
+  const formattedScore = hasScore ? (score * 100).toFixed(1) + '%' : t('screening.unavailableValue');
+  const formattedThreshold = hasThreshold ? (thresholdVal * 100).toFixed(0) + '%' : t('screening.unavailableValue');
+  const formatPerformanceValue = (value: number | undefined, percentage = false) =>
+    typeof value === 'number' && Number.isFinite(value)
+      ? percentage ? (value * 100).toFixed(1) + '%' : value.toFixed(4)
+      : t('screening.unavailableValue');
+  const nPositive = selectedThresholdData?.n_positive_cases;
+  const nNegative = selectedThresholdData?.n_negative_cases;
+  const sampleSize = typeof nPositive === 'number' && Number.isFinite(nPositive)
+    && typeof nNegative === 'number' && Number.isFinite(nNegative)
+    ? nPositive + nNegative : t('screening.unavailableValue');
 
   const modalityLabelMap: Record<string, string> = {
     facial: t('screening.facialExpressionsScore'),
@@ -660,111 +675,102 @@ const ScreeningView = ({ patientData }: { patientData: PatientData }) => {
 
   return (
     <div className="p-8 max-w-5xl mx-auto space-y-8">
-      <section>
-        <h2 className="text-xl font-bold text-gray-900 mb-4">{t('screening.title')}</h2>
-        <p className="text-gray-600 leading-relaxed mb-6 text-sm">
-          {t('screening.description')}
-        </p>
-
-
-        <div className="p-6 bg-white border border-gray-100 rounded-xl mb-6 shadow-xs">
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-sm font-bold text-gray-900 uppercase tracking-tight">{t('screening.diagnosisProbability')}</span>
-            {isAboveThreshold && (
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
-                {t('screening.highConfidence')}
-              </span>
-            )}
-          </div>
-          <div className="text-sm text-gray-900 mb-2">
-            <span className="font-semibold">{t('screening.recommendationLabel')}</span>{' '}
-            <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${isAboveThreshold ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-800 border border-gray-200'
-              }`}>
-              {isAboveThreshold ? t('screening.recommendationValue') : t('screening.recommendationNoFlagValue')}
+      <section aria-labelledby="screening-result-title">
+        <h1 id="screening-result-title" className="text-xl font-bold text-gray-900 mb-3">{t('screening.title')}</h1>
+        <p className="text-sm text-gray-600 leading-relaxed mb-6">{t('screening.introduction')}</p>
+        <div className="p-6 bg-white border border-gray-100 rounded-xl shadow-xs">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-6">
+            <h2 className="text-lg font-bold text-gray-900">{t('screening.resultHeading')}</h2>
+            <span className={`inline-flex max-w-full rounded-full px-3 py-1 text-sm font-semibold ${isAboveThreshold ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-800'}`}>
+              {isAboveThreshold === null
+                ? t('screening.resultUnavailable')
+                : t(isAboveThreshold ? 'screening.atOrAboveThresholdBadge' : 'screening.belowThresholdBadge')}
             </span>
           </div>
-          <p className="text-xs text-gray-700 leading-relaxed mb-4">
-            {isAboveThreshold ? (
-              <>
-                {t('screening.recommendationNotePrefix')}{' '}
-                <span className="font-semibold">{t('screening.recommendationNoteEmphasis')}</span>{' '}
-                {t('screening.recommendationNoteSuffix')}
-              </>
-            ) : (
-              <>
-                {t('screening.recommendationNoFlagPrefix')}{' '}
-                <span className="font-semibold">{t('screening.recommendationNoFlagEmphasis')}</span>{' '}
-                {t('screening.recommendationNoFlagSuffix')}
-              </>
-            )}
-          </p>
 
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex flex-wrap items-center gap-3 mb-4">
             <span className="text-lg text-teal-700 font-semibold">{t('screening.likelihoodOfASC')}</span>
-            <span className="text-4xl font-black text-teal-600">{formattedScore}</span>
+            <span className={hasScore ? "text-4xl font-black text-teal-600" : "text-lg font-semibold text-gray-500"}>{formattedScore}</span>
           </div>
 
           {/* Progress Bar with Threshold Marker */}
-          <div className="space-y-1">
-            <div className="relative h-4 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
-              {/* Threshold indicator line */}
-              <div
-                className={`absolute top-0 bottom-0 w-0.5 z-10 ${isAboveThreshold ? 'bg-red-300' : 'bg-red-500'}`}
-                style={{ left: `${thresholdVal * 100}%` }}
-              />
-              {/* Progress fill */}
-              <div
-                className={`h-full transition-all duration-500 ${isAboveThreshold ? 'bg-red-500' : 'bg-teal-500'}`}
-                style={{ width: `${score * 100}%` }}
-              />
+          {hasScore && (
+            <div className="space-y-1">
+              <div className="relative h-4 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
+                {/* Threshold indicator line */}
+                {hasThreshold && <div
+                  className={`absolute top-0 bottom-0 w-0.5 z-10 ${isAboveThreshold ? 'bg-red-300' : 'bg-red-500'}`}
+                  style={{ left: `${thresholdVal * 100}%` }}
+                />}
+                {/* Progress fill */}
+                <div
+                  className={`h-full transition-all duration-500 ${isAboveThreshold === null ? 'bg-gray-400' : isAboveThreshold ? 'bg-red-500' : 'bg-teal-500'}`}
+                  style={{ width: `${score * 100}%` }}
+                />
+              </div>
+              <div className="relative h-6 text-[11px] text-gray-400 font-bold mt-1">
+                <span className="absolute left-0 top-0">0%</span>
+                {hasThreshold && <span
+                  style={{ left: `${thresholdVal * 100}%`, transform: 'translateX(-50%)' }}
+                  className="absolute top-0 text-red-500 animate-fade-in"
+                >
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button type="button" aria-label={t('screening.thresholdLabel', { value: formattedThreshold })} className="relative flex items-center hover:text-red-700 transition-colors text-[11px] font-bold leading-none">
+                        <span>▲</span>
+                        <span className={`absolute ${thresholdVal * 100 > 50 ? 'right-full mr-1' : 'left-full ml-1'} top-0 flex items-center gap-1 whitespace-nowrap leading-none`}>
+                          <span className="hidden sm:inline">{t('screening.thresholdLabel', { value: formattedThreshold })}</span>
+                          <span className="sm:hidden">{formattedThreshold}</span>
+                          <Info size={11} className="shrink-0" />
+                        </span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-black text-white border border-white/10 max-w-xs text-xs">
+                      {t('screening.thresholdExplanationBody')}
+                    </TooltipContent>
+                  </Tooltip>
+                </span>}
+                <span className="absolute right-0 top-0">100%</span>
+              </div>
             </div>
-            <div className="relative h-6 text-[11px] text-gray-400 font-bold mt-1">
-              <span className="absolute left-0 top-0">0%</span>
-              <span
-                style={{ left: `${thresholdVal * 100}%`, transform: 'translateX(-50%)' }}
-                className="absolute top-0 text-red-500 animate-fade-in"
-              >
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button type="button" className="relative flex items-center hover:text-red-700 transition-colors text-[11px] font-bold leading-none">
-                      <span>▲</span>
-                      <span className={`absolute ${thresholdVal * 100 > 50 ? 'right-full mr-1' : 'left-full ml-1'} top-0 flex items-center gap-1 whitespace-nowrap leading-none`}>
-                        <span>Threshold ({formattedThreshold})</span>
-                        <Info size={11} className="shrink-0" />
-                      </span>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-black text-white border border-white/10 max-w-xs text-xs">
-                    {/* Explains how the threshold was calculated */}
-                  </TooltipContent>
-                </Tooltip>
-              </span>
-              <span className="absolute right-0 top-0">100%</span>
+          )}
+          <div className="mt-4 flex items-start gap-3 rounded-lg border border-amber-100 bg-amber-50/50 p-4">
+            <Info size={18} className="text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
+            <div>
+              <h3 className="text-sm font-bold text-gray-900 mb-1">{t('screening.interpretationTitle')}</h3>
+              <p className="text-sm text-gray-700 leading-relaxed">{t('screening.interpretationBody')}</p>
+              {isAboveThreshold === null && (
+                <p className="mt-2 text-sm text-gray-700 leading-relaxed">{t('screening.resultUnavailableBody')}</p>
+              )}
             </div>
           </div>
-
-          <p className="mt-4 text-xs text-teal-800 leading-relaxed">
-            {t('screening.modelDescription')}
-          </p>
-
-
-        </div>
-
-        <div className="mt-4 flex items-start gap-3 p-4 bg-orange-50/50 rounded-lg border border-orange-100">
-          <AlertTriangle className="text-orange-500 shrink-0 mt-0.5" size={18} />
-          <p className="text-xs text-orange-900 leading-relaxed">
-            <span className="font-bold">{t('screening.scopeTitle')}</span>{' '}
-            {t('screening.scopeBodyPrefix')}{' '}
-            <span className="font-semibold">{t('screening.scopeBodyEmphasis')}</span>{' '}
-            {t('screening.scopeBodySuffix')}
-          </p>
+          {screeningNote && (
+            <p className="mt-4 text-sm text-gray-700 leading-relaxed">{screeningNote}</p>
+          )}
+          <button
+            type="button"
+            onClick={onInspectMeasurements}
+            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
+          >
+            {t('screening.inspectMeasurements')}
+            <ArrowRight size={16} className="shrink-0" aria-hidden="true" />
+          </button>
         </div>
 
         <details className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <summary className="cursor-pointer text-xs font-bold uppercase tracking-widest text-gray-500">
+          <summary className="cursor-pointer text-sm font-bold text-gray-900">
+            {t('screening.thresholdExplanationTitle')}
+          </summary>
+          <p className="mt-3 text-sm text-gray-700 leading-relaxed">
+            {t('screening.thresholdExplanationBody')}
+          </p>
+        </details>
+
+        <details className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <summary className="cursor-pointer text-sm font-bold text-gray-900">
             {t('screening.modelPerformanceTitle')}
           </summary>
-          <p className="mt-3 text-xs text-gray-700 leading-relaxed mb-4">
+          <p className="mt-3 text-sm text-gray-700 leading-relaxed mb-4">
             {t('screening.modelPerformanceBody')}
           </p>
           <ConfusionMatrix thresholdData={selectedThresholdData} />
@@ -773,95 +779,92 @@ const ScreeningView = ({ patientData }: { patientData: PatientData }) => {
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-white p-3 rounded-lg border border-gray-200">
               <div className="text-gray-400 font-bold uppercase tracking-wider text-[9px]">AUPRC (OOF)</div>
-              <div className="text-base font-black text-gray-900">{selectedThresholdData.auprc.toFixed(4)}</div>
+              <div className="text-base font-black text-gray-900">{formatPerformanceValue(selectedThresholdData?.auprc)}</div>
             </div>
             <div className="bg-white p-3 rounded-lg border border-gray-200">
               <div className="text-gray-400 font-bold uppercase tracking-wider text-[9px]">AUROC (OOF)</div>
-              <div className="text-base font-black text-gray-900">{selectedThresholdData.auroc.toFixed(4)}</div>
+              <div className="text-base font-black text-gray-900">{formatPerformanceValue(selectedThresholdData?.auroc)}</div>
             </div>
             <div className="bg-white p-3 rounded-lg border border-gray-200">
-              <div className="text-gray-400 font-bold uppercase tracking-wider text-[9px]">Sensitivity</div>
-              <div className="text-base font-black text-gray-900">{(selectedThresholdData.sensitivity * 100).toFixed(1)}%</div>
+              <div className="text-gray-400 font-bold uppercase tracking-wider text-[9px]">{t('screening.sensitivity')}</div>
+              <div className="text-base font-black text-gray-900">{formatPerformanceValue(selectedThresholdData?.sensitivity, true)}</div>
             </div>
             <div className="bg-white p-3 rounded-lg border border-gray-200">
-              <div className="text-gray-400 font-bold uppercase tracking-wider text-[9px]">Specificity</div>
-              <div className="text-base font-black text-gray-900">{(selectedThresholdData.specificity * 100).toFixed(1)}%</div>
+              <div className="text-gray-400 font-bold uppercase tracking-wider text-[9px]">{t('screening.specificity')}</div>
+              <div className="text-base font-black text-gray-900">{formatPerformanceValue(selectedThresholdData?.specificity, true)}</div>
             </div>
           </div>
           <div className="mt-3 text-[10px] text-gray-400 leading-relaxed text-right">
-            Model: {screeningResult.model_version} | N = {selectedThresholdData.n_positive_cases + selectedThresholdData.n_negative_cases} ({selectedThresholdData.estimated_from})
+            {t('screening.modelLabel')}: {screeningResult?.model_version ?? t('screening.unavailableValue')} | N = {sampleSize} ({selectedThresholdData?.estimated_from ?? t('screening.unavailableValue')})
           </div>
         </details>
-      </section>
 
-      {/* Modality-Level Model Outputs */}
-      <section className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-sm font-bold text-gray-900">{t('screening.modalityOutputsTitle')}</h3>
-        </div>
-        <div className="space-y-4 text-sm text-gray-700">
-          {modalityOutputs.screening_modality_outputs.map((item) => {
-            const label = modalityLabelMap[item.modality] || item.modality;
-            const pctValue = Math.round(item.screening_score * 100);
-            const pctThreshold = Math.round(item.threshold * 100);
+        <details className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <summary className="cursor-pointer text-sm font-bold text-gray-900">
+            {t('screening.modalityOutputsTitle')}
+          </summary>
+          <p className="mt-3 mb-4 text-sm text-gray-700 leading-relaxed">{t('screening.modalityOutputsNote')}</p>
+          <div className="space-y-4 text-sm text-gray-700">
+            {modalityOutputs?.screening_modality_outputs?.map((item) => {
+              const label = modalityLabelMap[item.modality] || item.modality;
+              const hasModalityScore = typeof item.screening_score === 'number' && Number.isFinite(item.screening_score);
+              const hasModalityThreshold = typeof item.threshold === 'number' && Number.isFinite(item.threshold);
+              const hasModalityClassification = hasModalityScore && hasModalityThreshold && typeof item.above_threshold === 'boolean';
+              const pctValue = hasModalityScore ? Math.round(item.screening_score * 100) : null;
+              const pctThreshold = hasModalityThreshold ? Math.round(item.threshold * 100) : null;
 
-            return (
-              <div key={item.modality} className="space-y-1">
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold text-gray-800">{label}</span>
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className={`font-semibold ${item.above_threshold ? 'text-red-500 font-bold' : 'text-gray-900'}`}>
-                      {pctValue}%
-                    </span>
-                    {item.above_threshold && (
-                      <span className="bg-red-100 text-red-800 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase">Crossed</span>
-                    )}
-                  </div>
-                </div>
-                <div className="relative h-3 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
-                  <div
-                    className={`absolute top-0 bottom-0 w-0.5 z-10 ${item.above_threshold ? 'bg-red-300' : 'bg-red-500'}`}
-                    style={{ left: `${pctThreshold}%` }}
-                  />
-                  <div
-                    className={`h-full ${item.above_threshold ? 'bg-red-500' : 'bg-teal-500'}`}
-                    style={{ width: `${pctValue}%` }}
-                  />
-                </div>
-                <div className="relative h-6 text-[11px] text-gray-400 font-bold mt-1">
-                  <span className="absolute left-0 top-0">0%</span>
-                  <span
-                    style={{ left: `${pctThreshold}%`, transform: 'translateX(-50%)' }}
-                    className="absolute top-0 text-red-500 text-[11px] font-bold animate-fade-in"
-                  >
-                    <span className="relative flex items-center leading-none">
-                      <span>▲</span>
-                      <span className={`absolute ${pctThreshold > 50 ? 'right-full mr-1' : 'left-full ml-1'} top-0 whitespace-nowrap leading-none`}>
-                        Threshold ({pctThreshold}%)
+              return (
+                <div key={item.modality} className="space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold text-gray-800">{label}</span>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className={`font-semibold ${hasModalityClassification && item.above_threshold ? 'text-red-500 font-bold' : 'text-gray-900'}`}>
+                        {pctValue === null ? t('screening.unavailableValue') : `${pctValue}%`}
                       </span>
-                    </span>
-                  </span>
-                  <span className="absolute right-0 top-0">100%</span>
+                      {hasModalityClassification && item.above_threshold && (
+                        <span className="bg-red-100 text-red-800 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase">{t('screening.flagged')}</span>
+                      )}
+                    </div>
+                  </div>
+                  {hasModalityScore && <>
+                    <div className="relative h-3 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
+                      {hasModalityThreshold && <div
+                        className={`absolute top-0 bottom-0 w-0.5 z-10 ${item.above_threshold ? 'bg-red-300' : 'bg-red-500'}`}
+                        style={{ left: `${pctThreshold}%` }}
+                      />}
+                      <div
+                        className={`h-full ${!hasModalityClassification ? 'bg-gray-400' : item.above_threshold ? 'bg-red-500' : 'bg-teal-500'}`}
+                        style={{ width: `${pctValue}%` }}
+                      />
+                    </div>
+                    <div className="relative h-6 text-[11px] text-gray-400 font-bold mt-1">
+                      <span className="absolute left-0 top-0">0%</span>
+                      {pctThreshold !== null && <span
+                        style={{ left: `${pctThreshold}%`, transform: 'translateX(-50%)' }}
+                        className="absolute top-0 text-red-500 text-[11px] font-bold animate-fade-in"
+                      >
+                        <span className="relative flex items-center leading-none">
+                          <span>▲</span>
+                          <span className={`absolute ${pctThreshold > 50 ? 'right-full mr-1' : 'left-full ml-1'} top-0 whitespace-nowrap leading-none`}>
+                            {t('screening.thresholdLabel', { value: `${pctThreshold}%` })}
+                          </span>
+                        </span>
+                      </span>}
+                      <span className="absolute right-0 top-0">100%</span>
+                    </div>
+                  </>}
                 </div>
-              </div>
-            );
-          })}
-        </div>
-        <p className="mt-4 text-xs text-gray-500 leading-relaxed">
-          {t('screening.modalityOutputsNote')}
-        </p>
+              );
+            })}
+          </div>
+          {!modalityOutputs?.screening_modality_outputs?.length && (
+            <p className="text-sm text-gray-500">{t('screening.unavailableValue')}</p>
+          )}
+        </details>
       </section>
-
-      {/* Disclaimer */}
-      {screeningResult.disclaimer && (
-        <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-500 leading-relaxed">
-          <span className="font-bold">Disclaimer:</span> {screeningResult.disclaimer}
-        </div>
-      )}
     </div>
   );
 };
-
 
 const LearningView = () => {
   const { t } = useTranslation();
@@ -2066,13 +2069,15 @@ export default function App() {
   const isWelcomeRoute = routeState.route === 'welcome';
   const isDataRoute = routeState.route === 'data' || routeState.route === 'learning';
   const activeModality = routeState.modality;
+  const isLearningRoute = routeState.route === 'learning';
+  const isLearningOverview = isLearningRoute && activeModality === 'overview';
 
   const modalities = [
     {
       id: 'overview',
       label: t('modalities.overview.label'),
       icon: Layers,
-      desc: t('modalities.overview.description'),
+      desc: t(routeState.route === 'learning' ? 'learningOverview.overviewDescription' : 'modalities.overview.description'),
     },
     {
       id: 'facial',
@@ -2254,7 +2259,7 @@ export default function App() {
               </div>
             </>
           )}
-          {/* <LanguageSwitcher /> */}
+          <LanguageSwitcher />
         </div>
       </header>
 
@@ -2262,62 +2267,66 @@ export default function App() {
         {/* Sidebar */}
         {!isWelcomeRoute && (
           <aside className="w-80 bg-gray-50 border-r border-gray-100 flex flex-col p-6 overflow-y-auto hidden lg:flex">
-            <div className="mb-8">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">{t('sidebar.currentPatient')}</label>
-              <div className="p-3 bg-white border border-gray-200 rounded-xl shadow-sm">
-                {activeMode === 'learning' ? (
-                  <div className="py-1">
-                    <div className="font-bold text-gray-900 mb-1">{t('sidebar.trainingExample')}</div>
-                    <div className="text-gray-500 text-sm">{t('sidebar.noActivePatientCase')}</div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="font-black text-xl text-gray-900 mb-1">
-                          Patient #{patientData?.screeningResult.participant_id}
+            <div className={isLearningRoute ? 'mb-4' : 'mb-8'}>
+              <label className={`text-[10px] font-bold text-gray-400 uppercase tracking-widest block ${isLearningRoute ? '' : 'mb-3'}`}>
+                {t(isLearningRoute ? 'learningOverview.contextTitle' : 'sidebar.currentPatient')}
+              </label>
+              {!isLearningRoute && (
+                <div className="p-3 bg-white border border-gray-200 rounded-xl shadow-sm">
+                  {activeMode === 'learning' ? (
+                    <div className="py-1">
+                      <div className="font-bold text-gray-900 mb-1">{t('sidebar.trainingExample')}</div>
+                      <div className="text-gray-500 text-sm">{t('sidebar.noActivePatientCase')}</div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="font-black text-xl text-gray-900 mb-1">
+                            Patient #{patientData?.screeningResult?.participant_id}
+                          </div>
+                          <div className="text-[10px] text-gray-400 font-mono tracking-wider">{activeToken}</div>
                         </div>
-                        <div className="text-[10px] text-gray-400 font-mono tracking-wider">{activeToken}</div>
+                        <button
+                          onClick={() => {
+                            setActiveToken(null);
+                            setTokenInput('');
+                            window.history.pushState({}, '', '/');
+                            setRouteState({ route: 'welcome', modality: null });
+                          }}
+                          title={t('portal.lockSession')}
+                          className="p-1 text-gray-400 hover:text-red-500 rounded-lg hover:bg-gray-100 transition-colors border-0 bg-transparent cursor-pointer"
+                          aria-label={t('portal.lockSession')}
+                        >
+                          <Lock size={16} />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => {
-                          setActiveToken(null);
-                          setTokenInput('');
-                          window.history.pushState({}, '', '/');
-                          setRouteState({ route: 'welcome', modality: null });
-                        }}
-                        title={t('portal.lockSession')}
-                        className="p-1 text-gray-400 hover:text-red-500 rounded-lg hover:bg-gray-100 transition-colors border-0 bg-transparent cursor-pointer"
-                        aria-label={t('portal.lockSession')}
-                      >
-                        <Lock size={16} />
-                      </button>
-                    </div>
-                    <div className="text-[13px] text-gray-500">{t('sidebar.sitDate')}: {t('sidebar.sitDateValue')}</div>
-                    <div className="mt-2 space-y-1.5 text-[12px] text-gray-500">
-                      <div className="flex justify-between">
-                        <span>{t('sidebar.analysisStatus')}</span>
-                        <span className="font-semibold text-gray-700">{t('sidebar.statusComplete')}</span>
+                      <div className="text-[13px] text-gray-500">{t('sidebar.sitDate')}: {t('sidebar.sitDateValue')}</div>
+                      <div className="mt-2 space-y-1.5 text-[12px] text-gray-500">
+                        <div className="flex justify-between">
+                          <span>{t('sidebar.analysisStatus')}</span>
+                          <span className="font-semibold text-gray-700">{t('sidebar.statusComplete')}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>{t('sidebar.dataQuality')}</span>
+                          <span className="font-semibold text-gray-700">{t('sidebar.qualityUsable')}</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span>{t('sidebar.dataQuality')}</span>
-                        <span className="font-semibold text-gray-700">{t('sidebar.qualityUsable')}</span>
-                      </div>
-                    </div>
-                    <details className="mt-2 text-[12px] text-gray-500">
-                      <summary className="cursor-pointer font-semibold text-gray-600 hover:text-gray-800">{t('sidebar.details')}</summary>
-                      <div className="mt-2 flex justify-between">
-                        <span>{t('quality.faceTracking')}</span>
-                        <span className="font-semibold text-gray-700">{faceTrackingValue}%</span>
-                      </div>
-                      <div className="mt-2 flex justify-between">
-                        <span>{t('quality.audioQuality')}</span>
-                        <span className="font-semibold text-gray-700">{t('sidebar.qualityUsable')}</span>
-                      </div>
-                    </details>
-                  </>
-                )}
-              </div>
+                      <details className="mt-2 text-[12px] text-gray-500">
+                        <summary className="cursor-pointer font-semibold text-gray-600 hover:text-gray-800">{t('sidebar.details')}</summary>
+                        <div className="mt-2 flex justify-between">
+                          <span>{t('quality.faceTracking')}</span>
+                          <span className="font-semibold text-gray-700">{faceTrackingValue}%</span>
+                        </div>
+                        <div className="mt-2 flex justify-between">
+                          <span>{t('quality.audioQuality')}</span>
+                          <span className="font-semibold text-gray-700">{t('sidebar.qualityUsable')}</span>
+                        </div>
+                      </details>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             {isDataRoute && (
@@ -2351,35 +2360,37 @@ export default function App() {
             )}
 
 
-            <div className="mt-auto pt-6 border-t border-gray-200">
-              <div className="p-4 bg-teal-900 rounded-xl text-white">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
-                  <span className="text-xs font-bold uppercase tracking-wider text-teal-300">{t('sidebar.aiStatusTitle')}</span>
-                </div>
-                <div className="mt-2 flex items-start text-xs text-teal-100">
-                  <span className="w-20 shrink-0">{t('sidebar.modelLabel')}</span>
-                  <span className="ml-2 text-right font-semibold text-white">{t('sidebar.modelName')}</span>
-                </div>
-                <details className="mt-3 text-xs text-teal-100">
-                  <summary className="cursor-pointer font-semibold text-teal-200 hover:text-white">{t('sidebar.details')}</summary>
-                  <div className="mt-2 space-y-2">
-                    <div className="flex items-start">
-                      <span className="w-20 shrink-0">{t('sidebar.datasetSize')}</span>
-                      <span className="ml-2 flex-1 text-right font-semibold text-white">{t('sidebar.datasetValue')}</span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="w-20 shrink-0">{t('sidebar.inputs')}</span>
-                      <span className="ml-2 flex-1 text-right font-semibold text-white">{t('sidebar.inputsValue')}</span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="w-20 shrink-0">{t('sidebar.output')}</span>
-                      <span className="ml-2 flex-1 text-right font-semibold text-white">{t('sidebar.outputValue')}</span>
-                    </div>
+            {!isLearningRoute && (
+              <div className="mt-auto pt-6 border-t border-gray-200">
+                <div className="p-4 bg-teal-900 rounded-xl text-white">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-teal-300">{t('sidebar.aiStatusTitle')}</span>
                   </div>
-                </details>
+                  <div className="mt-2 flex items-start text-xs text-teal-100">
+                    <span className="w-20 shrink-0">{t('sidebar.modelLabel')}</span>
+                    <span className="ml-2 text-right font-semibold text-white">{t('sidebar.modelName')}</span>
+                  </div>
+                  <details className="mt-3 text-xs text-teal-100">
+                    <summary className="cursor-pointer font-semibold text-teal-200 hover:text-white">{t('sidebar.details')}</summary>
+                    <div className="mt-2 space-y-2">
+                      <div className="flex items-start">
+                        <span className="w-20 shrink-0">{t('sidebar.datasetSize')}</span>
+                        <span className="ml-2 flex-1 text-right font-semibold text-white">{t('sidebar.datasetValue')}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="w-20 shrink-0">{t('sidebar.inputs')}</span>
+                        <span className="ml-2 flex-1 text-right font-semibold text-white">{t('sidebar.inputsValue')}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="w-20 shrink-0">{t('sidebar.output')}</span>
+                        <span className="ml-2 flex-1 text-right font-semibold text-white">{t('sidebar.outputValue')}</span>
+                      </div>
+                    </div>
+                  </details>
+                </div>
               </div>
-            </div>
+            )}
           </aside>
         )}
 
@@ -2413,6 +2424,8 @@ export default function App() {
                 setRoutePath(getRouteForMode(mode));
               }}
             />
+          ) : isLearningOverview ? (
+            <LearningOverview />
           ) : isDataRoute ? (
             activeModality && activeModality !== 'overview'
               ? <DataModalityView
@@ -2427,7 +2440,9 @@ export default function App() {
               : <DataAssessmentView activeMode={activeMode} patientData={patientData!} />
           ) : (
             <>
-              {activeMode === 'screening' && <ScreeningView patientData={patientData!} />}
+              {activeMode === 'screening' && (
+                <ScreeningView patientData={patientData} onInspectMeasurements={() => setRoutePath('data', 'overview')} />
+              )}
               {activeMode === 'learning' && <LearningView />}
             </>
           )}

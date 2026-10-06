@@ -87,26 +87,23 @@ If you prefer running the development environment in a container to avoid instal
 
 ## 3. How to Use & Access Patient Cases
 
-When the application is run, it displays a secure clinician login portal by default to protect clinical records. Access to specific patient dashboards requires a valid access token.
+The root URL (`http://localhost:2346/`) displays the login screen. Access to a patient dashboard uses its configured token. This prototype checks tokens entirely client-side; they are not server-side authentication.
 
 ### 3.1 Initial Setup and Accessing Pre-Configured Cases
-One mock case is pre-configured in the repository. To access it, you must first create your local environment configuration:
+Only the bundled mock case `case_67869` is enabled by default. To configure local access:
 
 1. **Create the Environment File**:
    Copy the example environment template file to a `.env` file:
    ```bash
    cp .env.example .env
    ```
-2. **Access Tokens**:
-   The local access tokens are defined in your `.env`, for example file:
-   - **Patient #52560**: Defined by `VITE_PATIENT_TOKEN_1` (e.g. `example_token_1`)
-   - **Patient #67269**: Defined by `VITE_PATIENT_TOKEN_2` (e.g. `example_token_2`)
+2. **Access Token**:
+   The template sets `VITE_PATIENT_TOKEN_1=your_patient_token_1` and `VITE_PATIENT_CASE_1=case_67869`. You can change the token in `.env`; keep the case ID set to the bundled case. Restart the development server after changing `.env`.
 
 3. **Logging In**:
-   * **Input Box**: Navigate to `http://localhost:2346/` (also port `2346` if running via Docker) and paste the token value into the security access input field.
+   * **Input Box**: Navigate to `http://localhost:2346/` (also port `2346` if running via Docker) and enter `your_patient_token_1`, or the token you configured in `.env`.
    * **Direct URL**: Navigate directly using the token in the URL path:
-     - `http://localhost:2346/<VITE_PATIENT_TOKEN_1>`
-     - `http://localhost:2346/<VITE_PATIENT_TOKEN_2>`
+     - `http://localhost:2346/your_patient_token_1` (replace the final path segment if you changed the token).
 
 Once logged in, you can switch between the three workflow modes (Screening, In-Depth Assessment, and Learning) using the top navigation header.
 
@@ -117,11 +114,11 @@ Once logged in, you can switch between the three workflow modes (Screening, In-D
 The access routing operates entirely client-side. To change existing tokens or introduce new patient cases into the dashboard, follow this step-by-step procedure:
 
 #### Step 1: Set the Environment Variables
-Open your `.env` file at the project root and add or update the keys (e.g., adding a third patient):
+Open your `.env` file at the project root and add or update the keys (e.g., adding a second patient):
 ```env
 # Access token and case directory identifier for the new case
-VITE_PATIENT_TOKEN_3=your_new_secure_token_here
-VITE_PATIENT_CASE_3=case_new_id
+VITE_PATIENT_TOKEN_2=your_new_token_here
+VITE_PATIENT_CASE_2=case_new_id
 ```
 
 #### Step 2: Prepare and Save the Pipeline Data
@@ -145,13 +142,13 @@ To load this data statically in the application, register the imports and mappin
 2. **Define the Case ID reference**:
    Add the Case ID mapping referencing the new environment variable:
    ```typescript
-   const caseId3 = import.meta.env.VITE_PATIENT_CASE_3 || 'case_new_id';
+   const caseId2 = import.meta.env.VITE_PATIENT_CASE_2 || 'case_new_id';
    ```
 3. **Register the Case Object**:
    Add the case data object inside the `PATIENTS` dictionary:
    ```typescript
-   [caseId3]: {
-     caseId: caseId3,
+   [caseId2]: {
+     caseId: caseId2,
      screeningResult: screeningResult_new,
      multilabelConditionOutputs: multilabelConditionOutputs_new,
      modalityOutputs: modalityOutputs_new,
@@ -161,10 +158,10 @@ To load this data statically in the application, register the imports and mappin
 4. **Register the Access Token**:
    Add the token routing key mapping inside the `PATIENT_TOKENS` dictionary:
    ```typescript
-   [import.meta.env.VITE_PATIENT_TOKEN_3 || 'your_fallback_token']: caseId3,
+   [import.meta.env.VITE_PATIENT_TOKEN_2 || 'your_fallback_token']: caseId2,
    ```
 
-After saving these changes, the React development bundle or production build will automatically compile the new case assets, making them accessible via your new token.
+After saving these changes, restart the development server or rebuild for production to make the new case accessible via its token. Adding environment variables alone does not register a case; the data files and React mappings must also exist.
 
 
 ---

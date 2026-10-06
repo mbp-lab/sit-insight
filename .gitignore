@@ -152,3 +152,5 @@ website_data/case_*
 !website_data/case_67869
 website_data/assets/case_*
 !website_data/assets/case_67869
+
+.DS_Store
