@@ -40,6 +40,7 @@ import headWithoutAscExample from '../data/images/head-without-asc.svg';
 import appLogo from '../data/images/logo.png';
 import { modalityData } from '../data/modalityData';
 import { LearningOverview } from './components/LearningOverview';
+import { InterpretationNote } from './components/InterpretationNote';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { Button } from './components/ui/button';
 
@@ -79,7 +80,6 @@ import pairwiseGroupComparisons from '../../website_data/reference/pairwise_grou
 import prototypicalCases from '../../website_data/learning/prototypical_cases.json';
 import learningStatistics from '../../website_data/learning/learning_statistics.json';
 import featureDictionary from '../../website_data/metadata/feature_dictionary.json';
-import modelConfig from '../../website_data/metadata/model_config.json';
 
 import {
   Select,
@@ -486,67 +486,124 @@ const ModeButton = ({ active, onClick, icon: Icon, label, description }: {
   </button>
 );
 
-const ConfusionMatrix = ({ thresholdData }: { thresholdData: any }) => {
+const ScreeningEvaluationSummary = ({ thresholdData }: { thresholdData: any }) => {
   const { t } = useTranslation();
-  if (!thresholdData) return null;
-  const sens = thresholdData.sensitivity;
-  const spec = thresholdData.specificity;
-  const nPos = thresholdData.n_positive_cases;
-  const nNeg = thresholdData.n_negative_cases;
-  const total = nPos + nNeg;
-
-  if (![sens, spec, nPos, nNeg].every((value) => typeof value === 'number' && Number.isFinite(value)) || total <= 0) return null;
-
-  const tp = Math.round(sens * nPos);
-  const fn = nPos - tp;
-  const tn = Math.round(spec * nNeg);
-  const fp = nNeg - tn;
-
-  const tpPct = ((tp / total) * 100).toFixed(1) + '%';
-  const fnPct = ((fn / total) * 100).toFixed(1) + '%';
-  const fpPct = ((fp / total) * 100).toFixed(1) + '%';
-  const tnPct = ((tn / total) * 100).toFixed(1) + '%';
+  const formatRate = (value: unknown) => typeof value === 'number' && Number.isFinite(value)
+    ? `${(value * 100).toFixed(1)}%` : t('screening.unavailableValue');
+  const group = (key: 'withASC' | 'controls', count: unknown) => typeof count === 'number' && Number.isFinite(count)
+    ? t(`screening.evaluation.${key}`, { count }) : t('screening.unavailableValue');
+  const positiveGroup = group('withASC', thresholdData?.n_positive_cases);
+  const negativeGroup = group('controls', thresholdData?.n_negative_cases);
+  // Preserve the legacy frontend count calculation until directly exported counts replace it.
+  const complementCount = (rate: unknown, count: unknown) =>
+    typeof rate === 'number' && Number.isFinite(rate)
+      && typeof count === 'number' && Number.isFinite(count)
+      ? String(count - Math.round(rate * count)) : t('screening.unavailableValue');
+  const rows = [
+    { key: 'sensitivity', value: formatRate(thresholdData?.sensitivity), group: positiveGroup },
+    { key: 'specificity', value: formatRate(thresholdData?.specificity), group: negativeGroup },
+    { key: 'falseNegatives', value: complementCount(thresholdData?.sensitivity, thresholdData?.n_positive_cases), group: positiveGroup },
+    { key: 'falsePositives', value: complementCount(thresholdData?.specificity, thresholdData?.n_negative_cases), group: negativeGroup },
+  ];
 
   return (
     <div
-      className="border border-gray-100 rounded-lg overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
+      className="border border-gray-200 rounded-lg overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
       role="region"
       aria-label={t('screening.modelPerformanceTitle')}
       tabIndex={0}
     >
-      <table className="w-full text-sm">
+      <table className="w-full min-w-[540px] text-sm text-left">
         <thead>
           <tr className="bg-gray-50 text-gray-500">
-            <th className="p-4 text-left font-medium"></th>
-            <th className="p-4 text-center font-medium">{t('confusionMatrix.withASC')} (n={nPos})</th>
-            <th className="p-4 text-center font-medium">{t('confusionMatrix.withoutASC')} (n={nNeg})</th>
+            <th scope="col" className="p-4 font-semibold">{t('screening.evaluation.measure')}</th>
+            <th scope="col" className="p-4 font-semibold">{t('screening.evaluation.value')}</th>
+            <th scope="col" className="p-4 font-semibold">{t('screening.evaluation.group')}</th>
           </tr>
         </thead>
         <tbody>
-          <tr className="bg-teal-50/50">
-            <td className="p-4 font-medium text-gray-700">{t('confusionMatrix.atOrAboveThreshold')}</td>
-            <td className="p-4 text-center text-gray-600">
-              <div className="font-bold">{tpPct}</div>
-              <div className="text-[10px] text-gray-400">({tp}/{nPos} {t('confusionMatrix.truePositives')})</div>
-            </td>
-            <td className="p-4 text-center text-gray-600">
-              <div className="font-bold">{fpPct}</div>
-              <div className="text-[10px] text-gray-400">({fp}/{nNeg} {t('confusionMatrix.falsePositives')})</div>
-            </td>
-          </tr>
-          <tr className="bg-white">
-            <td className="p-4 font-medium text-gray-700">{t('confusionMatrix.belowThreshold')}</td>
-            <td className="p-4 text-center text-gray-600">
-              <div className="font-bold">{fnPct}</div>
-              <div className="text-[10px] text-gray-400">({fn}/{nPos} {t('confusionMatrix.falseNegatives')})</div>
-            </td>
-            <td className="p-4 text-center text-gray-600">
-              <div className="font-bold">{tnPct}</div>
-              <div className="text-[10px] text-gray-400">({tn}/{nNeg} {t('confusionMatrix.trueNegatives')})</div>
-            </td>
-          </tr>
+          {rows.map((row) => (
+            <tr key={row.key} className="bg-white border-t border-gray-200 align-top">
+              <th scope="row" className="p-4 font-normal">
+                <div className="font-semibold text-gray-900">{t(`screening.${row.key}`)}</div>
+                <p className="mt-1 text-gray-600 leading-relaxed">{t(`screening.${row.key}Description`)}</p>
+              </th>
+              <td className="p-4 font-semibold text-gray-900">{row.value}</td>
+              <td className="p-4 text-gray-700">{row.group}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
+    </div>
+  );
+};
+
+const ThresholdStatusBadge = ({ aboveThreshold }: { aboveThreshold: boolean }) => {
+  const { t } = useTranslation();
+  return (
+    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${aboveThreshold
+      ? 'bg-red-100 text-red-800 border-red-200'
+      : 'bg-teal-100 text-teal-800 border-teal-200'}`}>
+      {t(aboveThreshold ? 'dataAssessment.thresholdCrossed' : 'dataAssessment.belowThreshold')}
+    </span>
+  );
+};
+
+const ModelScoreBar = ({ value, threshold, thresholdText, aboveThreshold, compact = false, unitSuffix = '' }: {
+  value: number;
+  threshold: number | null;
+  thresholdText: string;
+  aboveThreshold: boolean | null;
+  compact?: boolean;
+  unitSuffix?: '' | '%';
+}) => {
+  const { t } = useTranslation();
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+  const labelOnLeft = threshold !== null && threshold >= 50;
+  return (
+    <div className="space-y-1">
+      <div className={`relative ${compact ? 'h-3' : 'h-4'} rounded-full bg-gray-100 overflow-hidden border border-gray-200`}>
+        {threshold !== null && <div
+          className={`absolute top-0 bottom-0 w-0.5 z-10 -translate-x-1/2 ${aboveThreshold ? 'bg-red-300' : 'bg-red-500'}`}
+          style={{ left: `${threshold}%` }}
+        />}
+        <div
+          className={`h-full transition-all duration-500 ${aboveThreshold === null ? 'bg-gray-400' : aboveThreshold ? 'bg-red-500' : 'bg-teal-500'}`}
+          style={{ width: `${value}%` }}
+        />
+      </div>
+      <div className="@container">
+        <div className="relative text-[12px] text-gray-400 font-bold leading-tight">
+          {threshold !== null && <Tooltip open={tooltipOpen} onOpenChange={setTooltipOpen}>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label={t('screening.thresholdLabel', { value: thresholdText })}
+                style={labelOnLeft
+                  ? { right: `${100 - threshold}%`, transform: 'translateX(6px)', maxWidth: `calc(${threshold}% + 6px)` }
+                  : { left: `${threshold}%`, transform: 'translateX(-6px)', maxWidth: `calc(${100 - threshold}% + 6px)` }}
+                className={`relative flex w-fit items-start gap-1 text-red-500 hover:text-red-700 transition-colors text-[12px] font-bold leading-tight focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 ${labelOnLeft ? 'ml-auto flex-row-reverse text-right' : 'text-left'}`}
+                onClick={(event) => { event.preventDefault(); setTooltipOpen(true); }}
+              >
+                <span className="w-[12px] shrink-0" aria-hidden="true">▲</span>
+                <span className="min-w-0">
+                  <Trans i18nKey="screening.thresholdMarker" values={{ value: thresholdText }} components={{
+                    value: <span className="inline-flex items-center gap-1 whitespace-nowrap" />,
+                    info: <Info size={12} aria-hidden="true" />,
+                  }} />
+                </span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="bg-black text-white border border-white/10 max-w-xs text-sm">
+              {t('screening.thresholdTooltip')}
+            </TooltipContent>
+          </Tooltip>}
+          <div className={`flex justify-between pointer-events-none ${threshold !== null ? 'mt-0.5' : ''} ${threshold !== null && threshold >= 10 && threshold <= 90 ? '@min-[480px]:absolute @min-[480px]:inset-x-0 @min-[480px]:top-0 @min-[480px]:mt-0' : ''}`}>
+            <span>0{unitSuffix}</span>
+            <span>100{unitSuffix}</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -703,9 +760,11 @@ const WelcomeView = ({
   );
 };
 
-const ScreeningView = ({ patientData, onInspectMeasurements }: {
+const ScreeningView = ({ patientData, onInspectMeasurements, onOpenLearning, learningExplanationHref }: {
   patientData: PatientData | null;
   onInspectMeasurements: () => void;
+  onOpenLearning: () => void;
+  learningExplanationHref: string;
 }) => {
   const screeningResult = patientData?.screeningResult;
   // Remove the confirmed boilerplate only; keep any other payload notes or warnings.
@@ -714,9 +773,8 @@ const ScreeningView = ({ patientData, onInspectMeasurements }: {
     '',
   ).trim();
   const modalityOutputs = patientData?.modalityOutputs;
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const thresholdStrategy = 'high_sensitivity';
-  const targetSensitivity = modelConfig.min_sensitivity * 100;
 
   const score = screeningResult?.asc_screening_score;
   const selectedThresholdData = screeningResult?.thresholds?.[thresholdStrategy];
@@ -725,17 +783,20 @@ const ScreeningView = ({ patientData, onInspectMeasurements }: {
   const hasThreshold = typeof thresholdVal === 'number' && Number.isFinite(thresholdVal);
   const isAboveThreshold = hasScore && hasThreshold ? score >= thresholdVal : null;
 
-  const formattedScore = hasScore ? (score * 100).toFixed(1) + '%' : t('screening.unavailableValue');
-  const formattedThreshold = hasThreshold ? (thresholdVal * 100).toFixed(0) + '%' : t('screening.unavailableValue');
-  const formatPerformanceValue = (value: number | undefined, percentage = false) =>
+  // Convert the exported 0–1 values once for display; classification above stays unrounded.
+  const displayScore = hasScore ? score * 100 : null;
+  const displayThreshold = hasThreshold ? thresholdVal * 100 : null;
+  const scoreFormat = new Intl.NumberFormat(i18n.resolvedLanguage ?? i18n.language, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const formatScore = (value: number | null) => value === null ? t('screening.unavailableValue') : scoreFormat.format(value);
+  const formatPerformanceValue = (value: number | undefined) =>
     typeof value === 'number' && Number.isFinite(value)
-      ? percentage ? (value * 100).toFixed(1) + '%' : value.toFixed(4)
+      ? value.toFixed(4)
       : t('screening.unavailableValue');
   const nPositive = selectedThresholdData?.n_positive_cases;
   const nNegative = selectedThresholdData?.n_negative_cases;
   const sampleSize = typeof nPositive === 'number' && Number.isFinite(nPositive)
     && typeof nNegative === 'number' && Number.isFinite(nNegative)
-    ? nPositive + nNegative : t('screening.unavailableValue');
+    ? nPositive + nNegative : null;
 
   const modalityLabelMap: Record<string, string> = {
     facial: t('screening.facialExpressionsScore'),
@@ -746,9 +807,9 @@ const ScreeningView = ({ patientData, onInspectMeasurements }: {
   };
 
   return (
-    <div className="p-8 max-w-5xl mx-auto space-y-8">
+    <div className="p-6 sm:p-8 max-w-6xl mx-auto space-y-8 break-words">
       <section aria-labelledby="screening-result-title">
-        <h1 id="screening-result-title" className="text-xl font-bold text-gray-900 mb-3">{t('screening.title')}</h1>
+        <h1 id="screening-result-title" className="text-2xl font-bold text-gray-900 mb-3">{t('screening.title')}</h1>
         <p className="text-sm text-gray-600 leading-relaxed mb-6">{t('screening.introduction')}</p>
         <div className="p-6 bg-white border border-gray-100 rounded-xl shadow-xs">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-6">
@@ -760,62 +821,22 @@ const ScreeningView = ({ patientData, onInspectMeasurements }: {
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 mb-4">
-            <span className="text-lg text-teal-700 font-semibold">{t('screening.likelihoodOfASC')}</span>
-            <span className={hasScore ? "text-4xl font-black text-teal-600" : "text-lg font-semibold text-gray-500"}>{formattedScore}</span>
+          <div className="mb-4 space-y-1">
+            <div className="flex flex-wrap items-baseline gap-2">
+              <span className="text-lg text-teal-700 font-semibold">{t('screening.likelihoodOfASC')}:</span>
+              <span className={hasScore ? "text-2xl font-bold text-teal-600" : "text-lg font-semibold text-gray-500"}>{formatScore(displayScore)}</span>
+            </div>
+            <p className="text-sm text-gray-500">{t('screening.scaleLabel')}</p>
           </div>
 
-          {/* Progress Bar with Threshold Marker */}
-          {hasScore && (
-            <div className="space-y-1">
-              <div className="relative h-4 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
-                {/* Threshold indicator line */}
-                {hasThreshold && <div
-                  className={`absolute top-0 bottom-0 w-0.5 z-10 ${isAboveThreshold ? 'bg-red-300' : 'bg-red-500'}`}
-                  style={{ left: `${thresholdVal * 100}%` }}
-                />}
-                {/* Progress fill */}
-                <div
-                  className={`h-full transition-all duration-500 ${isAboveThreshold === null ? 'bg-gray-400' : isAboveThreshold ? 'bg-red-500' : 'bg-teal-500'}`}
-                  style={{ width: `${score * 100}%` }}
-                />
-              </div>
-              <div className="relative h-6 text-[11px] text-gray-400 font-bold mt-1">
-                <span className="absolute left-0 top-0">0%</span>
-                {hasThreshold && <span
-                  style={{ left: `${thresholdVal * 100}%`, transform: 'translateX(-50%)' }}
-                  className="absolute top-0 text-red-500 animate-fade-in"
-                >
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button type="button" aria-label={t('screening.thresholdLabel', { value: formattedThreshold })} className="relative flex items-center hover:text-red-700 transition-colors text-[11px] font-bold leading-none">
-                        <span>▲</span>
-                        <span className={`absolute ${thresholdVal * 100 > 50 ? 'right-full mr-1' : 'left-full ml-1'} top-0 flex items-center gap-1 whitespace-nowrap leading-none`}>
-                          <span className="hidden sm:inline">{t('screening.thresholdLabel', { value: formattedThreshold })}</span>
-                          <span className="sm:hidden">{formattedThreshold}</span>
-                          <Info size={11} className="shrink-0" />
-                        </span>
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-black text-white border border-white/10 max-w-xs text-xs">
-                      {t('screening.thresholdTooltip', { targetSensitivity })}
-                    </TooltipContent>
-                  </Tooltip>
-                </span>}
-                <span className="absolute right-0 top-0">100%</span>
-              </div>
-            </div>
-          )}
-          <div className="mt-4 flex items-start gap-3 rounded-lg border border-amber-100 bg-amber-50/50 p-4">
-            <Info size={18} className="text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
-            <div>
-              <h3 className="text-sm font-bold text-gray-900 mb-1">{t('screening.interpretationTitle')}</h3>
-              <p className="text-sm text-gray-700 leading-relaxed">{t('screening.interpretationBody')}</p>
-              {isAboveThreshold === null && (
-                <p className="mt-2 text-sm text-gray-700 leading-relaxed">{t('screening.resultUnavailableBody')}</p>
-              )}
-            </div>
-          </div>
+          {displayScore !== null && <ModelScoreBar value={displayScore} threshold={displayThreshold} thresholdText={formatScore(displayThreshold)} aboveThreshold={isAboveThreshold} />}
+          <p className="mt-2 text-sm text-gray-700 leading-relaxed">{t('screening.scoreExplanation')}</p>
+          <InterpretationNote className="mt-4" title={t('screening.interpretationTitle')} headingAs="h3">
+            <p>{t('screening.interpretationBody')}</p>
+            {isAboveThreshold === null && (
+              <p className="mt-2">{t('screening.resultUnavailableBody')}</p>
+            )}
+          </InterpretationNote>
           {screeningNote && (
             <p className="mt-4 text-sm text-gray-700 leading-relaxed">{screeningNote}</p>
           )}
@@ -831,11 +852,71 @@ const ScreeningView = ({ patientData, onInspectMeasurements }: {
 
         <details className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
           <summary className="cursor-pointer text-sm font-bold text-gray-900">
+            {t('screening.modalityOutputsTitle')}
+          </summary>
+          <p className="mt-3 mb-4 text-sm text-gray-700 leading-relaxed">{t('screening.modalityOutputsNote')}</p>
+          <div className="space-y-3 text-sm text-gray-700">
+            {modalityOutputs?.screening_modality_outputs?.map((item) => {
+              const label = modalityLabelMap[item.modality] || item.modality;
+              const hasModalityScore = typeof item.screening_score === 'number' && Number.isFinite(item.screening_score);
+              const hasModalityThreshold = typeof item.threshold === 'number' && Number.isFinite(item.threshold);
+              const hasModalityClassification = hasModalityScore && hasModalityThreshold && typeof item.above_threshold === 'boolean';
+              const displayModalityScore = hasModalityScore ? item.screening_score * 100 : null;
+              const displayModalityThreshold = hasModalityThreshold ? item.threshold * 100 : null;
+
+              return (
+                <div key={item.modality} className="space-y-1">
+                  <div className="flex flex-wrap justify-between items-center gap-2">
+                    <span className="font-semibold text-gray-800">{label}</span>
+                    <div className="flex flex-wrap items-center gap-2 text-sm">
+                      <span className={`font-semibold ${hasModalityClassification && item.above_threshold ? 'text-red-500 font-bold' : 'text-gray-900'}`}>
+                        {formatScore(displayModalityScore)}
+                      </span>
+                      {hasModalityClassification && <ThresholdStatusBadge aboveThreshold={item.above_threshold} />}
+                    </div>
+                  </div>
+                  {displayModalityScore !== null && <ModelScoreBar
+                    value={displayModalityScore}
+                    threshold={displayModalityThreshold}
+                    thresholdText={formatScore(displayModalityThreshold)}
+                    aboveThreshold={hasModalityClassification ? item.above_threshold : null}
+                    compact
+                  />}
+                </div>
+              );
+            })}
+          </div>
+          {!modalityOutputs?.screening_modality_outputs?.length && (
+            <p className="text-sm text-gray-500">{t('screening.unavailableValue')}</p>
+          )}
+        </details>
+
+        <details className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <summary className="cursor-pointer text-sm font-bold text-gray-900">
             {t('screening.thresholdExplanationTitle')}
           </summary>
-          <p className="mt-3 text-sm text-gray-700 leading-relaxed whitespace-pre-line">
-            {t('screening.thresholdExplanationBody', { targetSensitivity })}
-          </p>
+          <div className="mt-4 space-y-4 text-sm text-gray-700 leading-relaxed">
+            <div>
+              <h3 className="font-semibold text-gray-900">{t('screening.howToRead.scoreTitle')}</h3>
+              <p className="mt-1">{t('screening.howToRead.scoreBody')}</p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">{t('screening.howToRead.thresholdTitle')}</h3>
+              <p className="mt-1">{t('screening.howToRead.thresholdBody')}</p>
+            </div>
+            <a
+              href={learningExplanationHref}
+              onClick={(event) => {
+                if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                event.preventDefault();
+                onOpenLearning();
+              }}
+              className="inline-flex items-center gap-2 text-teal-700 underline underline-offset-4 hover:text-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
+            >
+              {t('screening.howToRead.learningLink')}
+              <ArrowRight size={14} className="shrink-0" aria-hidden="true" />
+            </a>
+          </div>
         </details>
 
         <details className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
@@ -845,93 +926,37 @@ const ScreeningView = ({ patientData, onInspectMeasurements }: {
           <p className="mt-3 text-sm text-gray-700 leading-relaxed mb-4">
             {t('screening.modelPerformanceBody')}
           </p>
-          <ConfusionMatrix thresholdData={selectedThresholdData} />
+          <p className="mb-3 text-sm font-semibold text-gray-700">{sampleSize === null ? t('screening.unavailableValue') : t('screening.evaluation.sampleSize', { count: sampleSize })}</p>
+          <ScreeningEvaluationSummary thresholdData={selectedThresholdData} />
 
-          {/* Detailed Threshold Metrics */}
-          <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-white p-3 rounded-lg border border-gray-200">
-              <div className="text-gray-400 font-bold uppercase tracking-wider text-[9px]">AUPRC (OOF)</div>
-              <div className="text-base font-black text-gray-900">{formatPerformanceValue(selectedThresholdData?.auprc)}</div>
-            </div>
-            <div className="bg-white p-3 rounded-lg border border-gray-200">
-              <div className="text-gray-400 font-bold uppercase tracking-wider text-[9px]">AUROC (OOF)</div>
-              <div className="text-base font-black text-gray-900">{formatPerformanceValue(selectedThresholdData?.auroc)}</div>
-            </div>
-            <div className="bg-white p-3 rounded-lg border border-gray-200">
-              <div className="text-gray-400 font-bold uppercase tracking-wider text-[9px]">{t('screening.sensitivity')}</div>
-              <div className="text-base font-black text-gray-900">{formatPerformanceValue(selectedThresholdData?.sensitivity, true)}</div>
-            </div>
-            <div className="bg-white p-3 rounded-lg border border-gray-200">
-              <div className="text-gray-400 font-bold uppercase tracking-wider text-[9px]">{t('screening.specificity')}</div>
-              <div className="text-base font-black text-gray-900">{formatPerformanceValue(selectedThresholdData?.specificity, true)}</div>
-            </div>
-          </div>
-          <div className="mt-3 text-[10px] text-gray-400 leading-relaxed text-right">
-            {t('screening.modelLabel')}: {screeningResult?.model_version ?? t('screening.unavailableValue')} | N = {sampleSize} ({selectedThresholdData?.estimated_from ?? t('screening.unavailableValue')})
-          </div>
-        </details>
-
-        <details className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <summary className="cursor-pointer text-sm font-bold text-gray-900">
-            {t('screening.modalityOutputsTitle')}
-          </summary>
-          <p className="mt-3 mb-4 text-sm text-gray-700 leading-relaxed">{t('screening.modalityOutputsNote')}</p>
-          <div className="space-y-4 text-sm text-gray-700">
-            {modalityOutputs?.screening_modality_outputs?.map((item) => {
-              const label = modalityLabelMap[item.modality] || item.modality;
-              const hasModalityScore = typeof item.screening_score === 'number' && Number.isFinite(item.screening_score);
-              const hasModalityThreshold = typeof item.threshold === 'number' && Number.isFinite(item.threshold);
-              const hasModalityClassification = hasModalityScore && hasModalityThreshold && typeof item.above_threshold === 'boolean';
-              const pctValue = hasModalityScore ? Math.round(item.screening_score * 100) : null;
-              const pctThreshold = hasModalityThreshold ? Math.round(item.threshold * 100) : null;
-
-              return (
-                <div key={item.modality} className="space-y-1">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold text-gray-800">{label}</span>
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className={`font-semibold ${hasModalityClassification && item.above_threshold ? 'text-red-500 font-bold' : 'text-gray-900'}`}>
-                        {pctValue === null ? t('screening.unavailableValue') : `${pctValue}%`}
-                      </span>
-                      {hasModalityClassification && item.above_threshold && (
-                        <span className="bg-red-100 text-red-800 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase">{t('screening.flagged')}</span>
-                      )}
-                    </div>
+          <details className="mt-4 rounded-lg border border-gray-200 bg-white p-4">
+            <summary className="cursor-pointer text-sm font-bold text-gray-900">{t('screening.evaluation.technicalTitle')}</summary>
+            <div className="mt-4 space-y-4 text-sm text-gray-700 leading-relaxed">
+              <div>
+                <h3 className="font-semibold text-gray-900">{t('screening.evaluation.procedureTitle')}</h3>
+                <p className="mt-1">{t(selectedThresholdData?.estimated_from === 'training_out_of_fold_loocv' ? 'screening.evaluation.procedureLoocv' : 'screening.evaluation.procedureUnknown')}</p>
+                {selectedThresholdData?.estimated_from === 'training_out_of_fold_loocv' && <p className="mt-2">{t('screening.evaluation.procedureFinalFit')}</p>}
+                <p className="mt-1 break-words text-gray-600">{t('screening.evaluation.procedureSource')}: {selectedThresholdData?.estimated_from ?? t('screening.unavailableValue')}</p>
+              </div>
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {(['auroc', 'auprc'] as const).map((metric) => (
+                  <div key={metric} className="border-t border-gray-200 pt-3">
+                    <dt className="font-semibold text-gray-900">{t(`screening.evaluation.${metric}Label`)}</dt>
+                    <dd className="mt-1">
+                      <span className="text-base font-bold text-gray-900">{formatPerformanceValue(selectedThresholdData?.[metric])}</span>
+                      <p className="mt-1">{t(`screening.evaluation.${metric}Description`)}</p>
+                    </dd>
                   </div>
-                  {hasModalityScore && <>
-                    <div className="relative h-3 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
-                      {hasModalityThreshold && <div
-                        className={`absolute top-0 bottom-0 w-0.5 z-10 ${item.above_threshold ? 'bg-red-300' : 'bg-red-500'}`}
-                        style={{ left: `${pctThreshold}%` }}
-                      />}
-                      <div
-                        className={`h-full ${!hasModalityClassification ? 'bg-gray-400' : item.above_threshold ? 'bg-red-500' : 'bg-teal-500'}`}
-                        style={{ width: `${pctValue}%` }}
-                      />
-                    </div>
-                    <div className="relative h-6 text-[11px] text-gray-400 font-bold mt-1">
-                      <span className="absolute left-0 top-0">0%</span>
-                      {pctThreshold !== null && <span
-                        style={{ left: `${pctThreshold}%`, transform: 'translateX(-50%)' }}
-                        className="absolute top-0 text-red-500 text-[11px] font-bold animate-fade-in"
-                      >
-                        <span className="relative flex items-center leading-none">
-                          <span>▲</span>
-                          <span className={`absolute ${pctThreshold > 50 ? 'right-full mr-1' : 'left-full ml-1'} top-0 whitespace-nowrap leading-none`}>
-                            {t('screening.thresholdLabel', { value: `${pctThreshold}%` })}
-                          </span>
-                        </span>
-                      </span>}
-                      <span className="absolute right-0 top-0">100%</span>
-                    </div>
-                  </>}
-                </div>
-              );
-            })}
-          </div>
-          {!modalityOutputs?.screening_modality_outputs?.length && (
-            <p className="text-sm text-gray-500">{t('screening.unavailableValue')}</p>
-          )}
+                ))}
+              </dl>
+              <p>{t('screening.evaluation.auprcMethodNote')}</p>
+              <p>{t('screening.evaluation.countCalculation')}</p>
+              <div>
+                <h3 className="font-semibold text-gray-900">{t('screening.modelLabel')}: <span className="break-words">{screeningResult?.model_version ?? t('screening.unavailableValue')}</span></h3>
+                <p className="mt-1">{t('screening.evaluation.modelDescription')}</p>
+              </div>
+            </div>
+          </details>
         </details>
       </section>
     </div>
@@ -1026,7 +1051,7 @@ const DataAssessmentView = ({ activeMode, patientData }: { activeMode?: ViewMode
   }));
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
+    <div className="p-6 sm:p-8 max-w-6xl mx-auto space-y-8">
       {activeMode === 'learning' && (
         <section>
           <h2 className="text-xl font-bold text-gray-900 mb-4">{t('learningModeBox.title')}</h2>
@@ -1036,14 +1061,14 @@ const DataAssessmentView = ({ activeMode, patientData }: { activeMode?: ViewMode
         </section>
       )}
       <section>
-        <h2 className="text-xl font-bold text-gray-900 mb-4">{t('dataAssessment.overviewTitle')}</h2>
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">{t('dataAssessment.overviewTitle')}</h1>
         <p className="text-sm text-gray-600 leading-relaxed">
           {t('dataAssessment.overviewBody')}
         </p>
       </section>
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700 leading-relaxed">
-        <span className="font-semibold">{t('dataAssessment.interpretationNoteTitle')}:</span> {t('dataAssessment.interpretationNoteBody')}
-      </div>
+      <InterpretationNote title={t('dataAssessment.interpretationNoteTitle')}>
+        <p>{t('dataAssessment.interpretationNoteBody')}</p>
+      </InterpretationNote>
       <div className="grid grid-cols-1 gap-8">
         <section className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
           <div className="flex justify-between items-center mb-6">
@@ -1074,43 +1099,21 @@ const DataAssessmentView = ({ activeMode, patientData }: { activeMode?: ViewMode
               const pctThreshold = Math.round(item.threshold * 100);
               return (
                 <div key={item.condition} className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 space-y-2">
-                  <div className="flex justify-between items-center">
+                  <div className="flex flex-wrap justify-between items-center gap-2">
                     <span className="font-bold text-gray-800 text-sm">{item.condition_display}</span>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${item.crosses_threshold
-                      ? 'bg-red-100 text-red-800 border border-red-200'
-                      : 'bg-teal-100 text-teal-800 border border-teal-200'
-                      }`}>
-                      {item.crosses_threshold ? 'Threshold Crossed' : 'Below Threshold'}
-                    </span>
+                    <ThresholdStatusBadge aboveThreshold={item.crosses_threshold} />
                   </div>
                   <div className="flex justify-between text-xs text-gray-600">
                     <span>Probability Score: <span className="font-semibold text-gray-900">{pctScore}%</span></span>
                   </div>
-                  <div className="relative h-3 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
-                    <div
-                      className={`absolute top-0 bottom-0 w-0.5 z-10 ${item.crosses_threshold ? 'bg-red-300' : 'bg-red-500'}`}
-                      style={{ left: `${pctThreshold}%` }}
-                    />
-                    <div
-                      className={`h-full ${item.crosses_threshold ? 'bg-red-500' : 'bg-teal-500'}`}
-                      style={{ width: `${pctScore}%` }}
-                    />
-                  </div>
-                  <div className="relative h-6 text-[11px] text-gray-400 font-bold mt-1">
-                    <span className="absolute left-0 top-0">0%</span>
-                    <span
-                      style={{ left: `${pctThreshold}%`, transform: 'translateX(-50%)' }}
-                      className="absolute top-0 text-red-500 text-[11px] font-bold animate-fade-in"
-                    >
-                      <span className="relative flex items-center leading-none">
-                        <span>▲</span>
-                        <span className={`absolute ${pctThreshold > 50 ? 'right-full mr-1' : 'left-full ml-1'} top-0 whitespace-nowrap leading-none`}>
-                          Threshold ({pctThreshold}%)
-                        </span>
-                      </span>
-                    </span>
-                    <span className="absolute right-0 top-0">100%</span>
-                  </div>
+                  <ModelScoreBar
+                    value={pctScore}
+                    threshold={pctThreshold}
+                    thresholdText={`${pctThreshold}%`}
+                    aboveThreshold={item.crosses_threshold}
+                    unitSuffix="%"
+                    compact
+                  />
                 </div>
               );
             })}
@@ -2114,6 +2117,14 @@ export default function App() {
     }
   }, [routeState.route]);
 
+  React.useEffect(() => {
+    if (routeState.route === 'learning' && routeState.modality === 'overview' && window.location.hash === '#learning-process-title') {
+      const heading = document.getElementById('learning-process-title');
+      heading?.focus({ preventScroll: true });
+      heading?.scrollIntoView({ behavior: 'auto', block: 'start' });
+    }
+  }, [routeState]);
+
   const patientCaseId = activeToken ? PATIENT_TOKENS[activeToken] : null;
   const patientData = patientCaseId ? PATIENTS[patientCaseId] : null;
 
@@ -2523,7 +2534,16 @@ export default function App() {
           ) : (
             <>
               {activeMode === 'screening' && (
-                <ScreeningView patientData={patientData} onInspectMeasurements={() => setRoutePath('data', 'overview')} />
+                <ScreeningView
+                  patientData={patientData}
+                  onInspectMeasurements={() => setRoutePath('data', 'overview')}
+                  learningExplanationHref={`${activeToken ? `/${activeToken}` : ''}/learning/overview#learning-process-title`}
+                  onOpenLearning={() => {
+                    setActiveMode('learning');
+                    setRoutePath('learning', 'overview');
+                    window.history.replaceState({}, '', `${window.location.pathname}#learning-process-title`);
+                  }}
+                />
               )}
               {activeMode === 'learning' && <LearningView />}
             </>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type MouseEventHandler, type ReactNode } from 'react';
-import { Activity, ArrowDown, ArrowRight, Info, Stethoscope } from 'lucide-react';
+import { Activity, ArrowDown, ArrowRight, Stethoscope } from 'lucide-react';
 import { Trans, useTranslation } from 'react-i18next';
+import { InterpretationNote } from './InterpretationNote';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 function ScoreExplanationLink({ children, label, onClick }: {
@@ -166,13 +167,12 @@ export function LearningOverview({ onOpenScreening, onOpenAssessment }: Learning
         </dl>
       </section>
 
-      <section aria-labelledby="learning-interpretation-title" className="flex gap-3 rounded-lg border border-amber-100 bg-amber-50/50 p-4">
-        <Info size={18} className="shrink-0 text-amber-600 mt-0.5" aria-hidden="true" />
-        <div className="space-y-1">
-          <h2 id="learning-interpretation-title" className="text-sm font-bold text-gray-900">{t('learningOverview.interpretation.title')}</h2>
-          <p className="text-sm text-gray-600 leading-relaxed">{t('learningOverview.interpretation.description')}</p>
-        </div>
-      </section>
+      <InterpretationNote
+        title={t('learningOverview.interpretation.title')}
+        titleId="learning-interpretation-title"
+      >
+        {t('learningOverview.interpretation.description')}
+      </InterpretationNote>
     </article>
   );
 }
