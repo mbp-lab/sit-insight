@@ -190,34 +190,77 @@ export default {
   // The new German learningOverview wording needs researcher review.
   learningOverview: {
     title: "So verwenden Sie SIT-Insight",
-    introduction: "SIT-Insight zeigt Messwerte aus der Simulated Interaction Task, Vergleiche mit Referenzgruppen und Ausgaben von Forschungsmodellen. Dieser Leitfaden erklärt, wie Sie Screening und Vertiefte Bewertung lesen.",
+    introduction: "Dieser Leitfaden erklärt, wie SIT-Insight Aufzeichnungen aus der Simulated Interaction Task <nowrap>(<sit/>)</nowrap> in Verhaltensmesswerte und computergenerierte Scores umwandelt und wie Sie diese Informationen bei der Abklärung nutzen können.",
     overviewDescription: "Leitfaden zu den Modi und ihrer Interpretation",
     contextTitle: "Lernleitfaden",
     contextDescription: "Keine Fallergebnisse angezeigt",
+    abbreviations: {
+      helpLabel: "{{abbreviation}}: {{fullName}}",
+      sit: {
+        label: "SIT",
+        fullName: "Simulated Interaction Task",
+      },
+      ai: {
+        label: "KI",
+        fullName: "Künstliche Intelligenz",
+      },
+      asc: {
+        label: "ASS",
+        fullName: "Autismus-Spektrum-Störung",
+      },
+      adhd: {
+        label: "ADHS",
+        fullName: "Aufmerksamkeitsdefizit-/Hyperaktivitätsstörung",
+      },
+    },
+    process: {
+      title: "Woher kommen die Scores?",
+      recording: {
+        title: "Von der Aufzeichnung zu Messwerten",
+        description: "SIT-Insight schätzt Messwerte wie Gesichtsbewegungen, Blickvariabilität und Stimmmerkmale aus der Aufzeichnung. Sie beschreiben ausgewählte Verhaltensaspekte.",
+      },
+      training: {
+        title: "Aus Beispielen lernen",
+        description: "Ein Modell der künstlichen Intelligenz <nowrap>(<ai/>)</nowrap> ist eine statistische Methode. Beim Training lernt es Zusammenhänge zwischen Verhaltensmesswerten von Teilnehmenden und diagnostischen Zuordnungen.",
+      },
+      score: {
+        title: "Einen Score erzeugen",
+        description: "Das trainierte Modell kombiniert die Messwerte einer Aufzeichnung zu einem Score. Höhere Scores bedeuten, dass das Modell mehr Hinweise auf das Störungsbild liefert, auf dessen Unterscheidung es trainiert wurde.",
+      },
+    },
+    practicalUse: "Nutzen Sie Scores zusammen mit Ihren eigenen Beobachtungen. Die Verhaltensansichten zeigen Messwerte und Referenzvergleiche; sie liefern Kontext, aber nicht notwendigerweise eine Erklärung des Scores.",
     screening: {
-      title: "Screening: das Modellergebnis lesen",
-      description: "Screening bietet eine Zusammenfassung der Ausgabe des ASC-Screening-Modells. Lesen Sie den Score zusammen mit seinem Schwellenwert und der Interpretation.",
-      interpretation: "Ein Ergebnis am oder über dem Schwellenwert ist eine Markierung durch das Modell, keine Diagnose. Ein Ergebnis unter dem Schwellenwert schließt ASC nicht aus. Informationen zur Modellleistung beschreiben Ergebnisse in einer untersuchten Stichprobe, keine Gewissheit über eine einzelne Person.",
+      title: "Screening",
+      description: "Der gesamte <scoreExplanation>Screening-Score</scoreExplanation> für Autismus-Spektrum-Störung <nowrap>(<asc/>)</nowrap> kombiniert Informationen aus mehreren Verhaltensbereichen. Separate Modalitätsscores sind ebenfalls verfügbar.",
+      threshold: "Der Score wird mit einem Schwellenwert verglichen – einem Grenzwert, der Ergebnisse zur genaueren Betrachtung hervorhebt. Öffnen Sie Screening, um den gewählten Grenzwert, Informationen zu seiner Auswahl und die Evaluationsergebnisse zu sehen.",
+      explanationLinkLabel: "Screening-Score: Zur Erklärung des Scores springen",
+      action: "Screening öffnen",
     },
     assessment: {
-      title: "Vertiefte Bewertung: die Verhaltensinformationen erkunden",
-      description: "Wählen Sie eine Modalität, um ihre Messwerte und Visualisierungen zu betrachten. Wählen Sie eine Referenzgruppe, um den entsprechenden Vergleich zu untersuchen, und prüfen Sie mögliche Einschränkungen der Verfügbarkeit oder Aufnahmequalität.",
-      interpretation: "Der Überblick zeigt außerdem separate Modellausgaben für verschiedene Störungsbilder. Diese stellen keine sich gegenseitig ausschließenden Diagnosen dar und sollten nicht als Rangfolge diagnostischer Wahrscheinlichkeiten gelesen werden.",
+      title: "Vertiefte Bewertung",
+      description: "Erkunden Sie Verhaltensmesswerte und vergleichen Sie diese in den Modalitätsansichten mit ausgewählten Referenzgruppen. Der Überblick zeigt außerdem separate <scoreExplanation>störungsspezifische Scores</scoreExplanation> für Autismus-Spektrum-Störung <nowrap>(<asc/>)</nowrap>, Aufmerksamkeitsdefizit-/Hyperaktivitätsstörung <nowrap>(<adhd/>)</nowrap>, Depression und soziale Angststörung.",
+      interpretation: "Mehrere Scores können gleichzeitig erhöht sein. Sie sind separate Vorhersagen, keine Rangfolge von Diagnosen.",
+      explanationLinkLabel: "Störungsspezifische Scores: Zur Erklärung der Scores springen",
+      action: "Vertiefte Bewertung öffnen",
     },
     information: {
       title: "Drei Arten von Informationen",
       measurement: {
-        label: "Messwert",
+        label: "Verhaltensmesswert",
         description: "Eine aus der Aufzeichnung geschätzte Größe.",
       },
       reference: {
         label: "Referenzvergleich",
-        description: "Wie sich ein Messwert zu einer ausgewählten Studiengruppe verhält. Dies ist kein diagnostischer Grenzwert.",
+        description: "Wo dieser Messwert im Verhältnis zu einer ausgewählten Gruppe liegt.",
       },
       model: {
-        label: "Modellausgabe",
-        description: "Das Ergebnis eines Vorhersagemodells für seine definierte Aufgabe. Die Verhaltensvisualisierungen sind nicht notwendigerweise Erklärungen dieser Vorhersage.",
+        label: "Screening- oder störungsspezifischer Score",
+        description: "Die Vorhersage des trainierten Modells für seine definierte Aufgabe.",
       },
+    },
+    interpretation: {
+      title: "Scores interpretieren",
+      description: "Scores sind keine Maße für die Symptomschwere und keine etablierten individuellen diagnostischen Wahrscheinlichkeiten. Sie bestätigen ein Störungsbild nicht und schließen es auch nicht aus. Für sich allein sollten sie nicht bestimmen, ob eine weitere Abklärung erforderlich ist.",
     },
     explore: {
       title: "Die Modalitätsleitfäden erkunden",

@@ -2498,7 +2498,16 @@ export default function App() {
               }}
             />
           ) : isLearningOverview ? (
-            <LearningOverview />
+            <LearningOverview
+              onOpenScreening={() => {
+                setActiveMode('screening');
+                setRoutePath('model');
+              }}
+              onOpenAssessment={() => {
+                setActiveMode('assessment');
+                setRoutePath('data', 'overview');
+              }}
+            />
           ) : isDataRoute ? (
             activeModality && activeModality !== 'overview'
               ? <DataModalityView

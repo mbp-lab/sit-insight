@@ -186,34 +186,77 @@ export default {
   },
   learningOverview: {
     title: "How to use SIT-Insight",
-    introduction: "SIT-Insight presents measurements from the Simulated Interaction Task, comparisons with reference groups, and research-model outputs. This guide explains how to read Screening and In-depth assessment.",
+    introduction: "This guide explains how SIT-Insight turns recordings from the Simulated Interaction Task <nowrap>(<sit/>)</nowrap> into behavioral measurements and computer-generated scores, and how to use this information during assessment.",
     overviewDescription: "Guide to the modes and their interpretation",
     contextTitle: "Learning guide",
     contextDescription: "No case results shown",
+    abbreviations: {
+      helpLabel: "{{abbreviation}}: {{fullName}}",
+      sit: {
+        label: "SIT",
+        fullName: "Simulated Interaction Task",
+      },
+      ai: {
+        label: "AI",
+        fullName: "artificial intelligence",
+      },
+      asc: {
+        label: "ASC",
+        fullName: "autism spectrum condition",
+      },
+      adhd: {
+        label: "ADHD",
+        fullName: "attention-deficit/hyperactivity disorder",
+      },
+    },
+    process: {
+      title: "Where do the scores come from?",
+      recording: {
+        title: "From recording to measurements",
+        description: "SIT-Insight estimates measurements such as facial movement, gaze variability and voice characteristics from the recording. They describe selected aspects of behavior.",
+      },
+      training: {
+        title: "Learning from examples",
+        description: "An artificial intelligence <nowrap>(<ai/>)</nowrap> model is a statistical method. During training, it learns associations between participants’ behavioral measurements and diagnostic labels.",
+      },
+      score: {
+        title: "Producing a score",
+        description: "The trained model combines a recording’s measurements into a score. Higher scores give more model support to the condition it was trained to distinguish.",
+      },
+    },
+    practicalUse: "Use scores alongside your own observations. Behavioral views let you inspect measurements and reference comparisons; they provide context, not necessarily an explanation of the score.",
     screening: {
-      title: "Screening: read the model result",
-      description: "Screening provides a summary of the ASC screening-model output. Read the score together with its threshold and interpretation.",
-      interpretation: "A result at or above the threshold is a model flag, not a diagnosis. A result below the threshold does not exclude ASC. Model-performance information describes results in an evaluated sample, not certainty about one person.",
+      title: "Screening",
+      description: "The overall <scoreExplanation>screening score</scoreExplanation> for autism spectrum condition <nowrap>(<asc/>)</nowrap> combines information from several behavioral areas. Separate modality scores are also available.",
+      threshold: "The score is compared with a threshold—a cutoff for highlighting results for closer review. Open Screening to see the selected cutoff, how it was chosen, and the evaluation results.",
+      explanationLinkLabel: "Screening score: jump to the score explanation",
+      action: "Open Screening",
     },
     assessment: {
-      title: "In-depth assessment: explore the behavioral information",
-      description: "Choose a modality to inspect its measurements and visualizations. Select a reference group to examine the corresponding comparison, and check any availability or recording-quality limitations.",
-      interpretation: "The overview also presents separate condition-model outputs. These are not mutually exclusive diagnoses and should not be read as a ranking of diagnostic likelihood.",
+      title: "In-depth assessment",
+      description: "Explore behavioral measurements and compare them with selected reference groups in the modality views. The overview also presents separate <scoreExplanation>condition-specific scores</scoreExplanation> for autism spectrum condition <nowrap>(<asc/>)</nowrap>, attention-deficit/hyperactivity disorder <nowrap>(<adhd/>)</nowrap>, depression and social anxiety disorder.",
+      interpretation: "Multiple scores may be elevated together. They are separate predictions, not a ranking of diagnoses.",
+      explanationLinkLabel: "Condition-specific scores: jump to the score explanation",
+      action: "Open In-depth assessment",
     },
     information: {
       title: "Three kinds of information",
       measurement: {
-        label: "Measurement",
+        label: "Behavioral measurement",
         description: "A quantity estimated from the recording.",
       },
       reference: {
         label: "Reference comparison",
-        description: "How a measurement relates to a selected study group. This is not a diagnostic cutoff.",
+        description: "Where that measurement lies relative to a selected group.",
       },
       model: {
-        label: "Model output",
-        description: "A predictive model’s result for its defined task. The behavioral visualizations are not necessarily explanations of that prediction.",
+        label: "Screening or condition score",
+        description: "The trained model’s prediction for its defined task.",
       },
+    },
+    interpretation: {
+      title: "Interpreting scores",
+      description: "Scores are not measures of symptom severity or established individual diagnostic probabilities. They do not confirm or exclude a condition and should not, on their own, determine whether further assessment is needed.",
     },
     explore: {
       title: "Explore the modality guides",
