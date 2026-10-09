@@ -17,7 +17,7 @@ import {
   Theater
 } from 'lucide-react';
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import {
   CartesianGrid,
   Line,
@@ -41,6 +41,7 @@ import appLogo from '../data/images/logo.png';
 import { modalityData } from '../data/modalityData';
 import { LearningOverview } from './components/LearningOverview';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
+import { Button } from './components/ui/button';
 
 // --- Pipeline JSON Data Imports ---
 import screeningResult_67869 from '../../website_data/case_67869/screening_result.json';
@@ -552,83 +553,152 @@ const ConfusionMatrix = ({ thresholdData }: { thresholdData: any }) => {
 
 // --- Mode Views ---
 
+const WelcomeModeLink = ({ mode, href, onSelectMode, onHoverChange, onFocusChange, children }: {
+  mode: ModeOption;
+  href: string;
+  onSelectMode: (mode: ViewMode) => void;
+  onHoverChange: (mode: ViewMode | null) => void;
+  onFocusChange: (mode: ViewMode | null) => void;
+  children?: React.ReactNode;
+}) => (
+  <a
+    href={href}
+    onClick={(event) => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      onSelectMode(mode.id);
+    }}
+    onPointerEnter={(event) => {
+      if (event.pointerType !== 'touch') onHoverChange(mode.id);
+    }}
+    onPointerLeave={() => onHoverChange(null)}
+    onFocus={() => onFocusChange(mode.id)}
+    onBlur={() => onFocusChange(null)}
+    className="inline-flex items-center gap-1 whitespace-nowrap text-teal-700 underline underline-offset-4 hover:text-teal-900 focus-visible:text-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
+  >
+    <mode.icon size={14} className="shrink-0" aria-hidden="true" focusable="false" />
+    {children}
+  </a>
+);
+
 const WelcomeView = ({
   modes,
   activeMode,
+  casePathPrefix,
   onSelectMode,
 }: {
   modes: ModeOption[];
   activeMode?: ViewMode | null;
+  casePathPrefix: string;
   onSelectMode: (mode: ViewMode) => void;
 }) => {
   const { t } = useTranslation();
+  const [hoveredMode, setHoveredMode] = useState<ViewMode | null>(null);
+  const [focusedMode, setFocusedMode] = useState<ViewMode | null>(null);
   const primaryModes = modes.filter((mode) => mode.id !== 'learning');
   const learningMode = modes.find((mode) => mode.id === 'learning');
 
   return (
-    <div className="p-8 max-w-6xl mx-auto space-y-10">
-      <section className="rounded-3xl border border-gray-100 bg-white p-8 shadow-sm">
+    <div className="p-3 sm:p-8 max-w-6xl mx-auto">
+      <section className="rounded-3xl border border-gray-100 bg-white p-4 sm:p-8 shadow-sm">
         <div className="space-y-6 motion-safe:animate-[welcome-fade_0.6s_ease-out_0s_both]">
           <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">
             {t('welcome.title')}
           </h1>
-          <div className="space-y-5 text-sm text-gray-700 leading-relaxed">
-            <div>
-              <h2 className="text-lg font-bold text-gray-900 mb-2">{t('welcome.whatTitle')}</h2>
-              <p>{t('welcome.whatBody')}</p>
+          <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,3fr)]">
+            <div className="min-w-0 space-y-5">
+              <div className="space-y-5 text-sm text-gray-700 leading-relaxed">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900 mb-2">{t('welcome.whatTitle')}</h2>
+                  <p>
+                    {t('welcome.whatBody')}{' '}
+                    <a
+                      href="https://www.uni-bielefeld.de/fakultaeten/technische-fakultaet/arbeitsgruppen/human-centered-artificial-intelligence/tools/sit/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-teal-700 underline underline-offset-4 hover:text-teal-900"
+                    >
+                      {t('welcome.sitLink')}{' '}
+                      <ArrowRight size={14} className="inline -rotate-45 align-text-bottom" aria-hidden="true" />
+                    </a>
+                  </p>
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900 mb-2">{t('welcome.howTitle')}</h2>
+                  <p>
+                    <Trans
+                      t={t}
+                      i18nKey="welcome.howBody"
+                      values={{ screeningLabel: t('modes.screening.label'), assessmentLabel: t('modes.assessment.label') }}
+                      components={Object.fromEntries(primaryModes.map((mode) => [mode.id, (
+                        <WelcomeModeLink
+                          key={mode.id}
+                          mode={mode}
+                          href={`${casePathPrefix}/${mode.id === 'screening' ? 'model' : 'data-assessment'}`}
+                          onSelectMode={onSelectMode}
+                          onHoverChange={setHoveredMode}
+                          onFocusChange={setFocusedMode}
+                        />
+                      )]))}
+                    />
+                  </p>
+                </div>
+              </div>
+
+              {learningMode && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onSelectMode(learningMode.id)}
+                  className="grid h-auto w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 whitespace-normal rounded-xl border-gray-200 bg-white p-3 sm:p-4 text-left text-base hover:border-teal-200 hover:bg-teal-50/50 focus-visible:border-teal-600 focus-visible:ring-teal-600/30"
+                >
+                  <span className="rounded-lg bg-gray-100 p-2 text-gray-500">
+                    <learningMode.icon className="size-5" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0 font-semibold text-gray-900">{t('welcome.learningTitle')}</span>
+                  <ArrowRight className="size-4 text-gray-400" aria-hidden="true" />
+                  <span className="col-span-3 text-xs text-gray-500 leading-tight">{t('welcome.learningDescription')}</span>
+                </Button>
+              )}
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-gray-900 mb-2">{t('welcome.howTitle')}</h2>
-              <p>{t('welcome.howBody')}</p>
-            </div>
+
+            <section
+              aria-labelledby="welcome-review-title"
+              className="min-w-0 space-y-4 rounded-xl border border-gray-100 bg-gray-50 p-3 sm:p-4"
+            >
+              <h2 id="welcome-review-title" className="text-lg font-bold text-gray-900">{t('welcome.reviewTitle')}</h2>
+              <div className="space-y-3">
+                {primaryModes.map((mode) => (
+                  <Button
+                    key={mode.id}
+                    type="button"
+                    variant="outline"
+                    onClick={() => onSelectMode(mode.id)}
+                    className={`grid h-auto w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 whitespace-normal rounded-xl p-3 sm:p-4 text-left text-base hover:border-teal-200 hover:bg-teal-50/50 focus-visible:border-teal-600 focus-visible:ring-teal-600/30 ${activeMode === mode.id ? 'border-teal-600 bg-teal-50/50' : `${hoveredMode === mode.id || focusedMode === mode.id ? 'border-teal-200' : 'border-gray-200'} bg-white`}`}
+                  >
+                    <span className="rounded-lg bg-gray-100 p-2 text-gray-500">
+                      <mode.icon className="size-5" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0 font-semibold text-gray-900">{mode.label}</span>
+                    <ArrowRight className="size-4 text-gray-400" aria-hidden="true" />
+                    <span className="col-span-3 text-xs text-gray-500 leading-tight">{t(mode.id === 'screening' ? 'welcome.screeningDescription' : 'welcome.assessmentDescription')}</span>
+                  </Button>
+                ))}
+              </div>
+            </section>
           </div>
 
           <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-xs text-red-900">
             <AlertTriangle className="text-red-600 shrink-0 mt-0.5" size={16} />
             <p className="leading-relaxed">
               {t('welcome.scopeNoticePrefix')}{' '}
-              <span className="font-semibold">{t('welcome.scopeNoticeEmphasis')}</span>{' '}
+              <strong className="font-bold">{t('welcome.scopeNoticeEmphasis')}</strong>
               {t('welcome.scopeNoticeSuffix')}
             </p>
           </div>
         </div>
       </section>
 
-      <section className="space-y-4 motion-safe:animate-[welcome-fade_0.6s_ease-out_0.2s_both]">
-        <div className="space-y-1">
-          <h3 className="text-lg font-bold text-gray-900">{t('welcome.chooseTitle')}</h3>
-          <p className="text-sm text-gray-600">{t('welcome.chooseBody')}</p>
-        </div>
-        <h3 className="text-lg font-bold text-gray-900">{t('welcome.analyzeTitle')}</h3>
-        <div className="grid gap-4 md:grid-cols-2">
-          {primaryModes.map((mode) => (
-            <ModeButton
-              key={mode.id}
-              active={activeMode === mode.id}
-              onClick={() => onSelectMode(mode.id)}
-              icon={mode.icon}
-              label={mode.label}
-              description={mode.desc}
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-4 motion-safe:animate-[welcome-fade_0.6s_ease-out_0.3s_both]">
-        <h3 className="text-lg font-bold text-gray-900">{t('welcome.learnTitle')}</h3>
-        <div className="grid gap-4 md:grid-cols-2">
-          {learningMode ? (
-            <ModeButton
-              key={learningMode.id}
-              active={activeMode === learningMode.id}
-              onClick={() => onSelectMode(learningMode.id)}
-              icon={learningMode.icon}
-              label={learningMode.label}
-              description={learningMode.desc}
-            />
-          ) : null}
-        </div>
-      </section>
     </div>
   );
 };
@@ -2421,6 +2491,7 @@ export default function App() {
             <WelcomeView
               modes={modes}
               activeMode={isWelcomeRoute ? null : activeMode}
+              casePathPrefix={activeToken ? `/${activeToken}` : ''}
               onSelectMode={(mode) => {
                 setActiveMode(mode);
                 setRoutePath(getRouteForMode(mode));
