@@ -29,6 +29,7 @@ export default {
   },
   sidebar: {
     currentPatient: "Current Patient",
+    patientIdentifier: "Patient #{{id}}",
     lastAssessment: "Assessment Date",
     sitDate: "SIT date",
     analysisStatus: "Analysis status",
@@ -58,7 +59,7 @@ export default {
   modalities: {
     overview: {
       label: "General overview",
-      description: "Summary of available behavioral evidence",
+      description: "Summary of available behavioral measurements",
     },
     gaze: {
       label: "Gaze",
@@ -69,7 +70,7 @@ export default {
       description: "Expression intensity and variability",
     },
     vocal: {
-      label: "Vocal Prosody",
+      label: "Voice Characteristics",
       description: "Pitch and rhythm variability",
     },
     head: {
@@ -291,7 +292,7 @@ export default {
       },
     },
     interpretation: {
-      title: "Interpreting scores",
+      title: "Interpretation",
       description: "Scores are not measures of symptom severity or established individual diagnostic probabilities. They do not confirm or exclude a condition and should not, on their own, determine whether further assessment is needed.",
     },
     explore: {
@@ -349,12 +350,12 @@ export default {
     },
   },
   dataAssessment: {
-    overviewTitle: "General Overview:",
-    overviewBody: "The SIT recording of current case was analyzed across five behavioral modalities: facial expressivity, mimicry, gaze, head movements and vocal prosody. This page summarizes which modalities are available and provides access to detailed visualizations. Select a modality from the left sidebar to inspect the underlying behavioral visualization.",
+    overviewTitle: "General Overview",
+    overviewBody: "The SIT recording of current case was analyzed across five behavioral modalities: facial expressivity, mimicry, gaze, head movements and voice characteristics. This page summarizes which modalities are available and provides access to detailed visualizations. Select a modality from the left sidebar to inspect the underlying behavioral visualization.",
     multimodalFusion: "Condition-level model outputs",
     patientLabel: "Patient G532XHW",
     modalityPlaceholder: "Modality-specific analytics will appear here.",
-    interpretationNoteTitle: "Interpretation note",
+    interpretationNoteTitle: "Interpretation",
     interpretationNoteBody: "These visualizations describe non-verbal behavior captured during the SIT. They are not diagnostic markers and should be interpreted together with clinical context.",
     conditionInfoLabel: "Condition model details",
     conditionInfoBody: "This plot shows independent model scores for each condition based on non-verbal behavior captured during the SIT. Scores do not sum to 100% and should not be interpreted as diagnostic probabilities. The threshold marker on each axis indicates the model-specific cut-off above which the system flags that condition as behaviorally relevant for further clinical consideration. Passing a threshold does not confirm a diagnosis; it indicates that the SIT behavior resembles patterns associated with that condition in the training data.",
@@ -465,9 +466,9 @@ export default {
     alertText: "Gaze tracking quality and screen mapping may not be fully reliable. Interpret gaze-related values cautiously.",
   },
   vocalView: {
-    title: "Pitch, loudness, and speech-rate variability",
+    title: "Voice Characteristics",
     subtitle: "Prosodic features across participant-speaking segments",
-    infoLabel: "Vocal prosody chart details",
+    infoLabel: "Voice characteristics chart details",
     infoBody: "This view summarizes prosodic voice features extracted from participant-speaking segments of the SIT. The violin plot shows the distribution of the selected reference group, and the marker shows the current case. Pitch, loudness, and speech-rate values describe vocal behavior only; they are not diagnostic markers by themselves.",
     computationTitle: "How this feature is computed",
     computationBody: "Prosodic features are extracted from the audio signal during participant-speaking segments of the SIT. Pitch variability summarizes changes in fundamental frequency, loudness variability summarizes changes in vocal intensity, and speech-rate features summarize the temporal structure of voiced speech. Values are calculated only from valid audio segments.",

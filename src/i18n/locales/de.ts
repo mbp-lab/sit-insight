@@ -30,6 +30,7 @@ export default {
   },
   sidebar: {
     currentPatient: "Aktueller Patient",
+    patientIdentifier: "Patient #{{id}}",
     lastAssessment: "Bewertungsdatum",
     sitDate: "SIT-Datum",
     analysisStatus: "Analyse-Status",
@@ -59,7 +60,7 @@ export default {
   modalities: {
     overview: {
       label: "Allgemeiner Überblick",
-      description: "Zusammenfassung verfügbarer Verhaltenshinweise",
+      description: "Zusammenfassung verfügbarer Verhaltensmesswerte",
     },
     gaze: {
       label: "Blick",
@@ -70,7 +71,7 @@ export default {
       description: "Intensität und Variabilität der Ausdrücke",
     },
     vocal: {
-      label: "Stimmprosodie",
+      label: "Stimmmerkmale",
       description: "Variabilität von Tonhöhe und Rhythmus",
     },
     head: {
@@ -295,7 +296,7 @@ export default {
       },
     },
     interpretation: {
-      title: "Scores interpretieren",
+      title: "Interpretation",
       description: "Scores sind keine Maße für die Symptomschwere und keine etablierten individuellen diagnostischen Wahrscheinlichkeiten. Sie bestätigen ein Störungsbild nicht und schließen es auch nicht aus. Für sich allein sollten sie nicht bestimmen, ob eine weitere Abklärung erforderlich ist.",
     },
     explore: {
@@ -353,12 +354,12 @@ export default {
     },
   },
   dataAssessment: {
-    overviewTitle: "Allgemeiner Überblick:",
-    overviewBody: "Die SIT-Aufzeichnung des aktuellen Falls wurde über fünf Verhaltensmodalitäten analysiert: Gesichtsausdruck, Mimikry, Blick, Kopfbewegungen und Stimmprosodie. Diese Seite fasst zusammen, welche Modalitäten verfügbar sind, und bietet Zugriff auf detaillierte Visualisierungen. Wählen Sie links eine Modalität, um die zugrunde liegende Verhaltensvisualisierung zu betrachten.",
+    overviewTitle: "Allgemeiner Überblick",
+    overviewBody: "Die SIT-Aufzeichnung des aktuellen Falls wurde über fünf Verhaltensmodalitäten analysiert: Gesichtsausdruck, Mimikry, Blick, Kopfbewegungen und Stimmmerkmale. Diese Seite fasst zusammen, welche Modalitäten verfügbar sind, und bietet Zugriff auf detaillierte Visualisierungen. Wählen Sie links eine Modalität, um die zugrunde liegende Verhaltensvisualisierung zu betrachten.",
     multimodalFusion: "Modell-Outputs auf Condition-Ebene",
     patientLabel: "Patient G532XHW",
     modalityPlaceholder: "Modalitäts-spezifische Analysen erscheinen hier.",
-    interpretationNoteTitle: "Interpretationshinweis",
+    interpretationNoteTitle: "Interpretation",
     interpretationNoteBody: "Diese Visualisierungen beschreiben nonverbales Verhalten, das im SIT erfasst wurde. Sie sind keine diagnostischen Marker und sollten zusammen mit dem klinischen Kontext interpretiert werden.",
     conditionInfoLabel: "Hinweis zu Condition-Modellen",
     conditionInfoBody: "Dieses Diagramm zeigt unabhängige Modell-Scores für jede Condition auf Basis des im SIT erfassten nonverbalen Verhaltens. Die Scores summieren sich nicht zu 100% und dürfen nicht als diagnostische Wahrscheinlichkeiten interpretiert werden. Die Schwellenmarkierung auf jeder Achse zeigt den modell-spezifischen Cut-off, ab dem das System eine Condition als verhaltensrelevant für weitere klinische Abklärung markiert. Das Überschreiten einer Schwelle bestätigt keine Diagnose; es zeigt, dass das SIT-Verhalten Mustern der Trainingsdaten ähnelt.",
@@ -469,9 +470,9 @@ export default {
     alertText: "Blicktracking-Qualität und Bildschirmzuordnung sind möglicherweise nicht vollständig zuverlässig. Blickbezogene Werte vorsichtig interpretieren.",
   },
   vocalView: {
-    title: "Tonhöhe-, Lautstärke- und Sprechtempo-Variabilität",
+    title: "Stimmmerkmale",
     subtitle: "Prosodische Merkmale in Sprecherinnen-Segmenten",
-    infoLabel: "Details zur Stimmprosodie-Visualisierung",
+    infoLabel: "Details zur Visualisierung der Stimmmerkmale",
     infoBody: "Diese Ansicht fasst prosodische Stimmmerkmale zusammen, die aus Sprecherinnen-Segmenten des SIT extrahiert wurden. Das Violin-Diagramm zeigt die Verteilung der gewählten Referenzgruppe, und der Marker zeigt den aktuellen Fall. Tonhöhe-, Lautstärke- und Sprechtempo-Werte beschreiben ausschließlich Stimmverhalten; sie sind für sich genommen keine diagnostischen Marker.",
     computationTitle: "Wie dieses Merkmal berechnet wird",
     computationBody: "Prosodic features are extracted from the audio signal during participant-speaking segments of the SIT. Pitch variability summarizes changes in fundamental frequency, loudness variability summarizes changes in vocal intensity, and speech-rate features summarize the temporal structure of voiced speech. Values are calculated only from valid audio segments.",

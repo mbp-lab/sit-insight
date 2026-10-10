@@ -41,6 +41,7 @@ import appLogo from '../data/images/logo.png';
 import { modalityData } from '../data/modalityData';
 import { LearningOverview } from './components/LearningOverview';
 import { InterpretationNote } from './components/InterpretationNote';
+import { PatientContextCard } from './components/PatientContextCard';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { Button } from './components/ui/button';
 
@@ -594,7 +595,7 @@ const ModelScoreBar = ({ value, threshold, thresholdText, aboveThreshold, compac
                 </span>
               </button>
             </TooltipTrigger>
-            <TooltipContent className="bg-black text-white border border-white/10 max-w-xs text-sm">
+            <TooltipContent className="w-max max-w-[min(16rem,calc(100vw-1rem),var(--radix-tooltip-content-available-width))] whitespace-normal bg-black text-white border border-white/10 px-2 py-1 text-sm text-wrap">
               {t('screening.thresholdTooltip')}
             </TooltipContent>
           </Tooltip>}
@@ -866,13 +867,13 @@ const ScreeningView = ({ patientData, onInspectMeasurements, onOpenLearning, lea
 
               return (
                 <div key={item.modality} className="space-y-1">
-                  <div className="flex flex-wrap justify-between items-center gap-2">
-                    <span className="font-semibold text-gray-800">{label}</span>
-                    <div className="flex flex-wrap items-center gap-2 text-sm">
-                      <span className={`font-semibold ${hasModalityClassification && item.above_threshold ? 'text-red-500 font-bold' : 'text-gray-900'}`}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="min-w-0 font-semibold text-gray-800">{label}</span>
+                    <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-2 text-sm">
+                      {hasModalityClassification && item.above_threshold && <ThresholdStatusBadge aboveThreshold />}
+                      <span className={`text-right tabular-nums font-semibold ${hasModalityClassification && item.above_threshold ? 'text-red-500 font-bold' : 'text-gray-900'}`}>
                         {formatScore(displayModalityScore)}
                       </span>
-                      {hasModalityClassification && <ThresholdStatusBadge aboveThreshold={item.above_threshold} />}
                     </div>
                   </div>
                   {displayModalityScore !== null && <ModelScoreBar
@@ -2080,6 +2081,7 @@ export default function App() {
   const [activeMode, setActiveMode] = useState<ViewMode>('screening');
   const [referenceGroup, setReferenceGroup] = useState<ReferenceGroup>('control');
   const [gender, setGender] = useState<GenderBaseline>('all');
+  const mainContentRef = React.useRef<HTMLElement>(null);
   const { t } = useTranslation();
 
   const setRoutePath = (nextRoute: RouteView, nextModality: Modality | null = null) => {
@@ -2116,6 +2118,14 @@ export default function App() {
       setActiveMode('screening');
     }
   }, [routeState.route]);
+
+  React.useLayoutEffect(() => {
+    // The main panel persists across routes; page navigation should start at its top.
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTop = 0;
+      mainContentRef.current.scrollLeft = 0;
+    }
+  }, [routeState.route, routeState.modality, activeToken]);
 
   React.useEffect(() => {
     if (routeState.route === 'learning' && routeState.modality === 'overview' && window.location.hash === '#learning-process-title') {
@@ -2199,6 +2209,13 @@ export default function App() {
   const faceTrackingValue = DATA_QUALITY_ITEMS.find((item) => item.labelKey === 'quality.faceTracking')?.value ?? 0;
   const audioQualityValue = DATA_QUALITY_ITEMS.find((item) => item.labelKey === 'quality.audioQuality')?.value ?? 0;
 
+  const lockSession = () => {
+    setActiveToken(null);
+    setTokenInput('');
+    window.history.pushState({}, '', '/');
+    setRouteState({ route: 'welcome', modality: null });
+  };
+
 
   if (!activeToken) {
     const handleLoginSubmit = (e: React.FormEvent) => {
@@ -2280,19 +2297,25 @@ export default function App() {
       {/* Header */}
       <header className="h-20 bg-[#121212] flex items-center justify-between px-4 sm:px-6 lg:px-8 border-b border-gray-800 sticky top-0 z-50">
         <div className="flex items-center min-w-0">
-          <button
-            type="button"
-            onClick={() => setRoutePath('welcome')}
-            className="flex items-center gap-2 focus:outline-hidden hover:opacity-90 transition-opacity shrink-0"
+          <a
+            href={`${activeToken ? `/${activeToken}` : ''}/welcome`}
+            onClick={(event) => {
+              if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+              event.preventDefault();
+              if (isWelcomeRoute && mainContentRef.current) mainContentRef.current.scrollTop = 0;
+              setRoutePath('welcome');
+            }}
+            className="group -m-1.5 flex shrink-0 cursor-pointer items-center gap-2 rounded-xl p-1.5 ring-1 ring-transparent transition-colors hover:bg-white/10 hover:ring-teal-400/50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-400"
             aria-label={t('welcome.title')}
+            aria-current={isWelcomeRoute ? 'page' : undefined}
           >
             <img
               src={appLogo}
               alt="SIT-Insight logo"
               className="w-10 h-10 rounded-lg object-contain bg-black"
             />
-            <span className="text-white font-black text-xl tracking-tight hidden sm:inline">SIT-Insight</span>
-          </button>
+            <span className="text-white font-black text-xl tracking-tight hidden sm:inline transition-colors group-hover:text-teal-300 group-focus-visible:text-teal-300">SIT-Insight</span>
+          </a>
 
 
         </div>
@@ -2306,23 +2329,31 @@ export default function App() {
                 </div>
                 <div className="flex items-center rounded-full bg-white/10 p-1 shrink-0">
                   {modes.map((mode) => (
-                    <button
-                      key={mode.id}
-                      onClick={() => {
-                        setActiveMode(mode.id);
-                        setRoutePath(getRouteForMode(mode.id), activeModality);
-                      }}
-                      className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${activeMode === mode.id
-                        ? 'bg-white text-gray-900'
-                        : 'text-gray-200 hover:bg-white/20'
-                        }`}
-                      aria-pressed={activeMode === mode.id}
-                    >
-                      <mode.icon size={14} />
-                      <span className={activeMode === mode.id ? "hidden lg:inline shrink-0" : "hidden 2xl:inline shrink-0"}>
+                    <Tooltip key={mode.id}>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveMode(mode.id);
+                            setRoutePath(getRouteForMode(mode.id), activeModality);
+                          }}
+                          className={`flex cursor-pointer items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400 ${activeMode === mode.id
+                            ? 'bg-white text-gray-900'
+                            : 'text-gray-200 hover:bg-white/20'
+                            }`}
+                          aria-pressed={activeMode === mode.id}
+                          aria-label={mode.label}
+                        >
+                          <mode.icon size={14} aria-hidden="true" />
+                          <span className={activeMode === mode.id ? "hidden lg:inline shrink-0" : "hidden 2xl:inline shrink-0"}>
+                            {mode.label}
+                          </span>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent sideOffset={8} className={`w-max max-w-[calc(100vw-1rem)] bg-black text-white border border-white/10 px-2 py-1 text-xs text-wrap ${activeMode === mode.id ? 'lg:hidden' : '2xl:hidden'}`}>
                         {mode.label}
-                      </span>
-                    </button>
+                      </TooltipContent>
+                    </Tooltip>
                   ))}
                 </div>
                 <Tooltip>
@@ -2351,64 +2382,16 @@ export default function App() {
         {!isWelcomeRoute && (
           <aside className="w-80 bg-gray-50 border-r border-gray-100 flex flex-col p-6 overflow-y-auto hidden lg:flex">
             <div className={isLearningRoute ? 'mb-4' : 'mb-8'}>
-              <label className={`text-[10px] font-bold text-gray-400 uppercase tracking-widest block ${isLearningRoute ? '' : 'mb-3'}`}>
+              <label className={`text-[12px] font-bold text-gray-600 uppercase tracking-widest block ${isLearningRoute ? '' : 'mb-3'}`}>
                 {t(isLearningRoute ? 'learningOverview.contextTitle' : 'sidebar.currentPatient')}
               </label>
               {!isLearningRoute && (
-                <div className="p-3 bg-white border border-gray-200 rounded-xl shadow-sm">
-                  {activeMode === 'learning' ? (
-                    <div className="py-1">
-                      <div className="font-bold text-gray-900 mb-1">{t('sidebar.trainingExample')}</div>
-                      <div className="text-gray-500 text-sm">{t('sidebar.noActivePatientCase')}</div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="font-black text-xl text-gray-900 mb-1">
-                            Patient #{patientData?.screeningResult?.participant_id}
-                          </div>
-                          <div className="text-[10px] text-gray-400 font-mono tracking-wider">{activeToken}</div>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setActiveToken(null);
-                            setTokenInput('');
-                            window.history.pushState({}, '', '/');
-                            setRouteState({ route: 'welcome', modality: null });
-                          }}
-                          title={t('portal.lockSession')}
-                          className="p-1 text-gray-400 hover:text-red-500 rounded-lg hover:bg-gray-100 transition-colors border-0 bg-transparent cursor-pointer"
-                          aria-label={t('portal.lockSession')}
-                        >
-                          <Lock size={16} />
-                        </button>
-                      </div>
-                      <div className="text-[13px] text-gray-500">{t('sidebar.sitDate')}: {t('sidebar.sitDateValue')}</div>
-                      <div className="mt-2 space-y-1.5 text-[12px] text-gray-500">
-                        <div className="flex justify-between">
-                          <span>{t('sidebar.analysisStatus')}</span>
-                          <span className="font-semibold text-gray-700">{t('sidebar.statusComplete')}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>{t('sidebar.dataQuality')}</span>
-                          <span className="font-semibold text-gray-700">{t('sidebar.qualityUsable')}</span>
-                        </div>
-                      </div>
-                      <details className="mt-2 text-[12px] text-gray-500">
-                        <summary className="cursor-pointer font-semibold text-gray-600 hover:text-gray-800">{t('sidebar.details')}</summary>
-                        <div className="mt-2 flex justify-between">
-                          <span>{t('quality.faceTracking')}</span>
-                          <span className="font-semibold text-gray-700">{faceTrackingValue}%</span>
-                        </div>
-                        <div className="mt-2 flex justify-between">
-                          <span>{t('quality.audioQuality')}</span>
-                          <span className="font-semibold text-gray-700">{t('sidebar.qualityUsable')}</span>
-                        </div>
-                      </details>
-                    </>
-                  )}
-                </div>
+                <PatientContextCard
+                  participantId={patientData?.screeningResult?.participant_id ?? patientData?.caseId}
+                  token={activeToken}
+                  faceTrackingValue={faceTrackingValue}
+                  onLock={lockSession}
+                />
               )}
             </div>
 
@@ -2426,7 +2409,7 @@ export default function App() {
                     />
                   ) : null}
                 </div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-5 mb-4 block">{t('sidebar.overviewMenu')}</label>
+                <label className="text-[12px] font-bold text-gray-600 uppercase tracking-widest mt-5 mb-4 block">{t('sidebar.overviewMenu')}</label>
                 <div className="space-y-2">
                   {modalityItems.map((modality) => (
                     <ModeButton
@@ -2497,7 +2480,18 @@ export default function App() {
         )}
 
         {/* Main Content */}
-        <main className="flex-1 bg-white overflow-y-auto relative">
+        <main ref={mainContentRef} className="flex-1 bg-white overflow-y-auto relative">
+          {!isWelcomeRoute && !isLearningRoute && (
+            <div className="lg:hidden max-w-6xl mx-auto px-6 pt-4 sm:px-8">
+              <PatientContextCard
+                compact
+                participantId={patientData?.screeningResult?.participant_id ?? patientData?.caseId}
+                token={activeToken}
+                faceTrackingValue={faceTrackingValue}
+                onLock={lockSession}
+              />
+            </div>
+          )}
           {isWelcomeRoute ? (
             <WelcomeView
               modes={modes}
