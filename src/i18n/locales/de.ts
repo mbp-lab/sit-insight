@@ -1,4 +1,38 @@
 export default {
+  // New German abbreviation-help wording needs researcher review.
+  abbreviationHelp: {
+    helpLabel: "{{abbreviation}}: {{fullName}}",
+    terms: {
+      sit: { label: "SIT", aliases: ["SIT"], fullName: "Simulated Interaction Task" },
+      ai: { label: "KI", aliases: ["AI","KI"], fullName: "Künstliche Intelligenz" },
+      asc: { label: "ASS", aliases: ["ASC","ASS"], fullName: "Autismus-Spektrum-Störung" },
+      adhd: { label: "ADHS", aliases: ["ADHD","ADHS"], fullName: "Aufmerksamkeitsdefizit-/Hyperaktivitätsstörung" },
+      sad: { label: "SAS", aliases: ["SAD","SAS"], fullName: "Soziale Angststörung" },
+      mdd: { label: "MDD", aliases: ["MDD"], fullName: "Major Depression" },
+      au: { label: "AU", aliases: ["AU"], fullName: "Action Unit (kodierte Gesichtsbewegung)" },
+      aus: { label: "AUs", aliases: ["AUs"], fullName: "Action Units (kodierte Gesichtsbewegungen)" },
+      au04: { label: "AU04", aliases: ["AU04"], fullName: "Action Unit 04: Augenbrauensenker" },
+      au06: { label: "AU06", aliases: ["AU06"], fullName: "Action Unit 06: Wangenheber" },
+      au12: { label: "AU12", aliases: ["AU12"], fullName: "Action Unit 12: Mundwinkelheber" },
+      icd11: { label: "ICD-11", aliases: ["ICD-11"], fullName: "Internationale Klassifikation der Krankheiten, 11. Revision" },
+      dsm5: { label: "DSM-5", aliases: ["DSM-5"], fullName: "Diagnostisches und Statistisches Manual Psychischer Störungen, 5. Auflage" },
+      ados: { label: "ADOS", aliases: ["ADOS"], fullName: "Diagnostische Beobachtungsskala für Autistische Störungen" },
+      ados2: { label: "ADOS-2", aliases: ["ADOS-2"], fullName: "Diagnostische Beobachtungsskala für Autistische Störungen – 2" },
+      adir: { label: "ADI-R", aliases: ["ADI-R"], fullName: "Diagnostisches Interview für Autismus – Revidiert" },
+      auroc: { label: "AUROC", aliases: ["AUROC"], fullName: "Fläche unter der Receiver-Operating-Characteristic-Kurve" },
+      auprc: { label: "AUPRC", aliases: ["AUPRC"], fullName: "Fläche unter der Präzisions-Recall-Kurve" },
+      ap: { label: "AP", aliases: ["AP"], fullName: "durchschnittliche Präzision" },
+      oof: { label: "OOF", aliases: ["OOF"], fullName: "Vorhersage außerhalb der jeweiligen Trainingsstichprobe (Out-of-fold)" },
+      loocv: { label: "LOOCV", aliases: ["LOOCV"], fullName: "Kreuzvalidierung mit jeweils einer ausgelassenen Person (Leave-one-out-Kreuzvalidierung)" },
+      sd: { label: "SD", aliases: ["SD"], fullName: "Standardabweichung" },
+      iqr: { label: "IQR", aliases: ["IQR"], fullName: "Interquartilsabstand" },
+      dtw: { label: "DTW", aliases: ["DTW"], fullName: "dynamische Zeitverzerrung (Dynamic Time Warping)" },
+      f0: { label: "F0", aliases: ["F0"], fullName: "Grundfrequenz" },
+      hz: { label: "Hz", aliases: ["Hz"], fullName: "Hertz" },
+      fdr: { label: "FDR", aliases: ["FDR"], fullName: "Falschentdeckungsrate" },
+      cdss: { label: "CDSS", aliases: ["CDSS"], fullName: "klinisches Entscheidungsunterstützungssystem" },
+    },
+  },
   header: {
     dataAssessment: "Datenbasierte Bewertung",
     modelAssessment: "Modellbasierte Bewertung",
@@ -58,6 +92,7 @@ export default {
     sitDateValue: "27. Jan. 2026",
   },
   modalities: {
+    definitionHelpLabel: "Über {{modality}}",
     overview: {
       label: "Allgemeiner Überblick",
       description: "Zusammenfassung verfügbarer Verhaltensmesswerte",
@@ -65,22 +100,27 @@ export default {
     gaze: {
       label: "Blick",
       description: "Fixationsdichte und Aufmerksamkeit",
+      definition: "Wohin der Blick gerichtet ist und wie seine Position im Zeitverlauf variiert.",
     },
     facial: {
       label: "Gesichtsausdruck",
       description: "Intensität und Variabilität der Ausdrücke",
+      definition: "Gesichtsbewegungen sowie ihre Intensität und Variabilität im Zeitverlauf.",
     },
     vocal: {
       label: "Stimmmerkmale",
       description: "Variabilität von Tonhöhe und Rhythmus",
+      definition: "Merkmale der Stimme, darunter Tonhöhe, Lautstärke und zeitliche Struktur des Sprechens.",
     },
     head: {
       label: "Kopfbewegung",
       description: "Bewegungs- und Haltungsdynamik",
+      definition: "Kopfhaltung und Kopfbewegungen im Zeitverlauf, einschließlich Nicken und horizontaler Bewegungen.",
     },
     mimicry: {
       label: "Mimikry",
       description: "Zeitliche Ausrichtung an den Ausdruck der Schauspielerin",
+      definition: "Zeitliche Koordination zwischen dem Gesichtsausdruck der teilnehmenden Person und dem der aufgezeichneten Gesprächsperson.",
     },
   },
   learningModeBox: {
@@ -202,7 +242,7 @@ export default {
     mimicryScore: "Mimikry",
     gazeScore: "Blick",
     headMovementScore: "Kopfbewegung",
-    voiceScore: "Stimmprosodie",
+    voiceScore: "Stimmmerkmale",
     modalityOutputsNote: "Diese Ausgaben stammen aus separaten Modalitätsmodellen. Sie sind keine Merkmalsbeiträge oder Erklärungen der kombinierten Vorhersage.",
     maskingAlert: "Maskierungswarnung:",
     maskingAlertText: "Patient zeigt hohe Gesichtsausdruckswerte, was auf eine hohe Kompensation (Tarnung) während der ersten 5 Minuten der SIT-Interaktion hindeuten kann.",
@@ -305,10 +345,14 @@ export default {
     },
   },
   learning: {
+    modalityIntroductionLinks: "Weitere Hinweise finden Sie unter <interpretation>So lesen Sie diese Visualisierung</interpretation> und <clinical>Klinischer Kontext und Forschung</clinical>.",
+    visualInterpretationTitle: "Visuelle Interpretation",
+    goalLabel: "Ziel",
+    interpretationLabel: "Interpretation",
     title: "Identifizierung subtiler ASS-Marker bei Erwachsenen",
     description: "Erwachsene mit ASS nutzen oft Tarnung, um soziale Schwierigkeiten zu maskieren. Die SIT-Aufgabe offenbart \"Durchsickern\" in nonverbalen Kanälen, die schwer bewusst zu kontrollieren sind.",
     trainingModule: "Trainingsmodul: Maskierung",
-    trainingDescription: "Lernen Sie, die Diskrepanz zwischen hohen \"Sozialer Reziprozität\"-Werten (kompensatorisch) und atypischer \"Stimmprosodie\" (objektiver Biomarker) zu erkennen.",
+    trainingDescription: "Lernen Sie, die Diskrepanz zwischen hohen \"Sozialer Reziprozität\"-Werten (kompensatorisch) und atypischen \"Stimmmerkmalen\" (objektiver Biomarker) zu erkennen.",
     identifyGaze: "Kompensatorische Blickmuster identifizieren",
     analyzeMicro: "Mikroausdruckslatenz analysieren",
     theoreticalFramework: "Theoretischer Rahmen",
@@ -335,7 +379,7 @@ export default {
     differentialDiagnosis: "Differentialdiagnose-Vergleich",
     clinicalNote: "Klinische CDSS-Notiz",
     maskingIndicator: "Maskierungsindikator (Hoch)",
-    maskingIndicatorDesc: "Die Diskrepanz zwischen Sozialer Reziprozität (40%) und Stimmprosodie (65%) deutet auf erhebliche kognitive Anstrengungen zur Maskierung von Symptomen während der SIT-Interaktion hin.",
+    maskingIndicatorDesc: "Die Diskrepanz zwischen Sozialer Reziprozität (40%) und Stimmmerkmalen (65%) deutet auf erhebliche kognitive Anstrengungen zur Maskierung von Symptomen während der SIT-Interaktion hin.",
     differentialAlert: "Differentialdiagnose-Warnung",
     differentialAlertDesc: "Hohe Überlappung mit ADHS-Markern in Kopfbewegungsmustern beobachtet. Empfehlung: Screening auf exekutive Dysfunktion.",
     sitParameters: "SIT-Insight-Parameter",
@@ -355,15 +399,17 @@ export default {
   },
   dataAssessment: {
     overviewTitle: "Allgemeiner Überblick",
-    overviewBody: "Die SIT-Aufzeichnung des aktuellen Falls wurde über fünf Verhaltensmodalitäten analysiert: Gesichtsausdruck, Mimikry, Blick, Kopfbewegungen und Stimmmerkmale. Diese Seite fasst zusammen, welche Modalitäten verfügbar sind, und bietet Zugriff auf detaillierte Visualisierungen. Wählen Sie links eine Modalität, um die zugrunde liegende Verhaltensvisualisierung zu betrachten.",
-    multimodalFusion: "Modell-Outputs auf Condition-Ebene",
+    overviewBody: "Die SIT-Aufzeichnung des aktuellen Falls wurde über fünf Verhaltensmodalitäten analysiert: <facial/>, <mimicry/>, <gaze/>, <head/> und <vocal/>. Diese Seite fasst zusammen, welche Modalitäten verfügbar sind, und bietet Zugriff auf detaillierte Visualisierungen. Wählen Sie links eine Modalität, um die zugrunde liegende Verhaltensvisualisierung zu betrachten.",
+    multimodalFusion: "Störungsspezifische Scores",
+    scoreLabel: "Score",
+    conditionIntroduction: "Die Modelle kombinieren Verhaltensmesswerte anhand von Zusammenhängen, die sie aus Daten von Teilnehmenden mit und ohne das jeweilige Störungsbild gelernt haben. Höhere Scores stehen für stärkere Vorhersagen des entsprechenden Störungsbilds. Jedes Störungsbild hat einen eigenen Schwellenwert, um ein Ergebnis für eine weiterführende klinische Betrachtung hervorzuheben.",
     patientLabel: "Patient G532XHW",
     modalityPlaceholder: "Modalitäts-spezifische Analysen erscheinen hier.",
     interpretationNoteTitle: "Interpretation",
     interpretationNoteBody: "Diese Visualisierungen beschreiben nonverbales Verhalten, das im SIT erfasst wurde. Sie sind keine diagnostischen Marker und sollten zusammen mit dem klinischen Kontext interpretiert werden.",
     conditionInfoLabel: "Hinweis zu Condition-Modellen",
-    conditionInfoBody: "Dieses Diagramm zeigt unabhängige Modell-Scores für jede Condition auf Basis des im SIT erfassten nonverbalen Verhaltens. Die Scores summieren sich nicht zu 100% und dürfen nicht als diagnostische Wahrscheinlichkeiten interpretiert werden. Die Schwellenmarkierung auf jeder Achse zeigt den modell-spezifischen Cut-off, ab dem das System eine Condition als verhaltensrelevant für weitere klinische Abklärung markiert. Das Überschreiten einer Schwelle bestätigt keine Diagnose; es zeigt, dass das SIT-Verhalten Mustern der Trainingsdaten ähnelt.",
-    conditionNote: "Die Scores sind unabhängige Modell-Outputs und keine klinischen Diagnosewahrscheinlichkeiten. Schwellenwerte markieren Entscheidungsgrenzen, keine diagnostischen Kriterien.",
+    conditionInfoBody: "Jedes störungsspezifische Modell wird darauf trainiert, Teilnehmende mit dem jeweiligen Störungsbild von Teilnehmenden ohne dieses Störungsbild zu unterscheiden. Letztere können andere Diagnosen haben.",
+    conditionNote: "Mehrere Scores können gleichzeitig erhöht sein. Sie sind weder eine Rangfolge von Diagnosen noch etablierte individuelle diagnostische Wahrscheinlichkeiten.",
     thresholdLabel: "Entscheidungsschwelle",
     thresholdCrossed: "Schwellenwert überschritten",
     belowThreshold: "Unter dem Schwellenwert",
@@ -373,7 +419,7 @@ export default {
     gazeDesc: "Misst Augenkontaktdauer und -konsistenz während der Interaktion mit dem vorab aufgezeichneten Schauspieler.",
     facialExpressivity: "Gesichtsausdruck",
     facialDesc: "Quantifiziert das Spektrum und die Häufigkeit von Mikroausdrücken und emotionaler Reaktion.",
-    vocalProsody: "Stimmprosodie",
+    vocalProsody: "Stimmmerkmale",
     vocalDesc: "Analysiert Tonhöhenvarianz und Rhythmus. Flache oder atypische Prosodie ist bei ASS häufig.",
     headMovement: "Kopfbewegung",
     headDesc: "Verfolgt Koordination und übermäßige oder eingeschränkte Bewegung während der Antwortphasen.",
@@ -725,6 +771,7 @@ export default {
   },
   learningDetails: {
     gaze: {
+      introduction: "SIT-Insight schätzt die Blickrichtung aus dem Video und fasst anhand gültiger Tracking-Bilder zusammen, wohin der Blick im Verhältnis zum Bildschirm gerichtet ist. Es erfasst auch, wie die Blickrichtung im Zeitverlauf variiert. Diese Ansichten helfen Ihnen, die Verteilung des Blickverhaltens während der Interaktion zu beschreiben.",
       goal: "Bewerten Sie, wie oft und wie lange sich die interviewte Person auf die Gesprächspartnerin im Video konzentriert",
       interpretation: "Das Punktdiagramm zeigt das Blickverhalten der interviewten Person auf dem Bildschirm, der Gesprächspartnerin im Video und der Umgebung. Ein einzelner Punkt stellt die kumulierte Zeitdauer dar, die die interviewte Person insgesamt an diesen Ort blickt.",
       alerts: [
@@ -754,6 +801,7 @@ export default {
     },
     facial: {
       goal: "Bewerten Sie die Intensität positiver Gesichtsausdrücke während der Interaktion mit der Gesprächspartnerin im Video",
+      introduction: "SIT-Insight schätzt die Intensität von Gesichtsbewegungen aus dem Video, darunter lächelassoziierte Bewegungen und das Senken der Augenbrauen. Es fasst ihr Niveau und ihre Variation im Zeitverlauf zusammen. Diese Messwerte helfen Ihnen, Veränderungen des Gesichtsausdrucks während der Interaktion zu beschreiben und Muster mit Referenzgruppen zu vergleichen.",
       interpretation: "Das Liniendiagramm zeigt die Intensität der positiven Gesichtsausdrücke (Lächeln) im Zeitverlauf. Die Visualisierung ist in drei zeitliche Phasen unterteilt – „Tisch decken“, „Bevorzugtes Essen“ und „Nicht bevorzugtes Essen“. Anhand des Linienverlaufs kann die Variabilität der positiven Gesichtsausdrücke beurteilt werden. Der aktuelle Fall kann mit der Datenverteilung einer ausgewählten Referenzgruppe verglichen werden. Die grauen Bereiche zeigen die 1. und 2. Standardabweichung der jeweiligen Referenzgruppe.",
       alerts: [
         "Wenn Personen eine Brille oder Maske tragen, können Gesichtsausdrücke nicht vollständig erfasst werden.",
@@ -782,6 +830,7 @@ export default {
     },
     vocal: {
       goal: "Ermöglicht den Vergleich von Stimme-Parametern mit einer Referenzgruppe.",
+      introduction: "SIT-Insight gewinnt Stimmmerkmale aus dem Audiosignal, darunter die Variation von Tonhöhe und Lautstärke sowie die zeitliche Struktur stimmhafter Sprachanteile. Diese Messwerte beschreiben, wie die Stimme im Verlauf der Interaktion variiert. Sie helfen Ihnen, stimmliche Muster zu betrachten und mit Referenzgruppen zu vergleichen.",
       interpretation: "Die Violindiagramme zeigen die Variabilität der Tonhöhe der Person in den drei Phasen des SIT. In diesen Phasen wird über „Tisch decken“, „Bevorzugtes Essen“ oder „Nicht bevorzugtes Essen“ gesprochen. Der aktuelle Fall kann mit der Datenverteilung einer ausgewählten Referenzgruppe verglichen werden. Die durchgehende Linie zeigt den Median der Referenzgruppe, das heißt 50% der Werte der Referenzgruppe liegen unter oder über diesem Wert. Die gestrichelten Linien kennzeichnen den Interquartilsabstand, in dem 50% der Personen der Referenzgruppe liegen.",
       alerts: [
         "Vom Referenzwert abweichende Werte können auch auf andere Diagnosen hinweisen (Beispiel: flacher Affekt bei Depression).",
@@ -810,6 +859,7 @@ export default {
     },
     head: {
       goal: "Bewerten Sie Kopfbewegungsmuster während des SIT, einschließlich der Nickaktivität und der horizontalen Kopfbewegung.",
+      introduction: "SIT-Insight schätzt die Kopforientierung aus dem Video und fasst ihre Variation im Zeitverlauf zusammen. Die Messwerte beschreiben die Streuung der vertikalen und horizontalen Kopfwinkel. Sie helfen Ihnen, Bewegungsmuster während der Interaktion genauer zu betrachten und mit ausgewählten Referenzgruppen zu vergleichen.",
       interpretation: "Die Visualisierung zeigt, wie sich die Kopfbewegungsmerkmale der interviewten Person im Vergleich zu einer ausgewählten Referenzgruppe verhalten. Die angezeigten Merkmale fassen das Bewegungsniveau und die Bewegungsvariabilität während der Interaktion zusammen.\n\nMittelwerte beschreiben das Gesamtausmaß der Bewegung. Variabilitätswerte beschreiben, wie stabil oder schwankend die Bewegung im Zeitverlauf war. Beispielsweise deutet eine höhere Nickvariabilität auf mehr Veränderung der vertikalen Kopfbewegung über die Interaktion hin.\n\nKopfbewegungen sollten als Teil der nonverbalen Kommunikation interpretiert werden. Eine Abweichung von der Referenzgruppe weist für sich genommen nicht auf ASS hin. Kopfbewegungen können durch Körperhaltung, Kameraposition, Aufgabenbeteiligung, Angst, motorische Aktivität, Medikation, kulturellen Kommunikationsstil oder Tracking-Qualität beeinflusst werden.\n\nEs gibt keinen Schwellenwert für Kopfbewegungen, der eindeutig auf ASS hinweist.",
       alerts: [
         "Kopfbewegungen sollten als Teil der nonverbalen Kommunikation interpretiert werden. Eine Abweichung von der Referenzgruppe weist für sich genommen nicht auf ASS hin. Kopfbewegungen können durch Körperhaltung, Kameraposition, Aufgabenbeteiligung, Angst, motorische Aktivität, Medikation, kulturellen Kommunikationsstil oder Tracking-Qualität beeinflusst werden.",
@@ -838,6 +888,7 @@ export default {
     },
     mimicry: {
       goal: "Bewerten Sie die zeitliche Abstimmung zwischen den Gesichtsausdrücken der interviewten Person und denen der Gesprächspartnerin während des SIT.",
+      introduction: "SIT-Insight vergleicht lächelassoziierte Gesichtsbewegungen der teilnehmenden Person und der aufgezeichneten Gesprächsperson und berücksichtigt dabei deren zeitlichen Verlauf. Die Messwerte fassen zusammen, wie eng die beiden Ausdrucksmuster zeitlich übereinstimmen. Sie helfen Ihnen, die zeitliche Koordination des Gesichtsausdrucks während der Interaktion zu betrachten.",
       interpretation: "Die Visualisierung zeigt, wie stark die lächelassoziierten Gesichtsausdrücke der interviewten Person mit den Ausdrücken der Gesprächspartnerin im Video übereinstimmen. Höhere Abstimmungswerte weisen darauf hin, dass das Gesichtsausdrucksmuster der Person dem der Interaktionspartnerin innerhalb eines kurzen Zeitfensters ähnlicher war.\n\nDies bedeutet nicht, dass die Person die Interaktionspartnerin absichtlich nachgeahmt hat. Die Visualisierung beschreibt eine beobachtbare zeitliche Koordination des Gesichtsverhaltens.",
       alerts: [
         "Niedrigere Mimikry-Werte sollten für sich genommen nicht als Beleg für ASS interpretiert werden. Sie können auch neutralen Affekt, geringe Gesamtexpressivität, Depression, Angst, Aufgabenbeteiligung, individuellen Interaktionsstil, Aufnahmequalität oder Einschränkungen des Face-Trackings widerspiegeln.",

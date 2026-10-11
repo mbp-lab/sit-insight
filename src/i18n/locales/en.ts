@@ -1,4 +1,37 @@
 export default {
+  abbreviationHelp: {
+    helpLabel: "{{abbreviation}}: {{fullName}}",
+    terms: {
+      sit: { label: "SIT", aliases: ["SIT"], fullName: "Simulated Interaction Task" },
+      ai: { label: "AI", aliases: ["AI","KI"], fullName: "artificial intelligence" },
+      asc: { label: "ASC", aliases: ["ASC","ASS"], fullName: "autism spectrum condition" },
+      adhd: { label: "ADHD", aliases: ["ADHD","ADHS"], fullName: "attention-deficit/hyperactivity disorder" },
+      sad: { label: "SAD", aliases: ["SAD","SAS"], fullName: "social anxiety disorder" },
+      mdd: { label: "MDD", aliases: ["MDD"], fullName: "major depressive disorder" },
+      au: { label: "AU", aliases: ["AU"], fullName: "facial action unit" },
+      aus: { label: "AUs", aliases: ["AUs"], fullName: "facial action units" },
+      au04: { label: "AU04", aliases: ["AU04"], fullName: "Action Unit 04: brow lowerer" },
+      au06: { label: "AU06", aliases: ["AU06"], fullName: "Action Unit 06: cheek raiser" },
+      au12: { label: "AU12", aliases: ["AU12"], fullName: "Action Unit 12: lip corner puller" },
+      icd11: { label: "ICD-11", aliases: ["ICD-11"], fullName: "International Classification of Diseases, 11th Revision" },
+      dsm5: { label: "DSM-5", aliases: ["DSM-5"], fullName: "Diagnostic and Statistical Manual of Mental Disorders, Fifth Edition" },
+      ados: { label: "ADOS", aliases: ["ADOS"], fullName: "Autism Diagnostic Observation Schedule" },
+      ados2: { label: "ADOS-2", aliases: ["ADOS-2"], fullName: "Autism Diagnostic Observation Schedule, Second Edition" },
+      adir: { label: "ADI-R", aliases: ["ADI-R"], fullName: "Autism Diagnostic Interview–Revised" },
+      auroc: { label: "AUROC", aliases: ["AUROC"], fullName: "area under the receiver operating characteristic curve" },
+      auprc: { label: "AUPRC", aliases: ["AUPRC"], fullName: "area under the precision–recall curve" },
+      ap: { label: "AP", aliases: ["AP"], fullName: "average precision" },
+      oof: { label: "OOF", aliases: ["OOF"], fullName: "out-of-fold prediction" },
+      loocv: { label: "LOOCV", aliases: ["LOOCV"], fullName: "leave-one-out cross-validation" },
+      sd: { label: "SD", aliases: ["SD"], fullName: "standard deviation" },
+      iqr: { label: "IQR", aliases: ["IQR"], fullName: "interquartile range" },
+      dtw: { label: "DTW", aliases: ["DTW"], fullName: "dynamic time warping" },
+      f0: { label: "F0", aliases: ["F0"], fullName: "fundamental frequency" },
+      hz: { label: "Hz", aliases: ["Hz"], fullName: "hertz" },
+      fdr: { label: "FDR", aliases: ["FDR"], fullName: "false discovery rate" },
+      cdss: { label: "CDSS", aliases: ["CDSS"], fullName: "clinical decision support system" },
+    },
+  },
   header: {
     dataAssessment: "Data-based Assessment",
     modelAssessment: "Model-based Assessment",
@@ -57,6 +90,7 @@ export default {
     sitDateValue: "Jan 27, 2026",
   },
   modalities: {
+    definitionHelpLabel: "About {{modality}}",
     overview: {
       label: "General overview",
       description: "Summary of available behavioral measurements",
@@ -64,22 +98,27 @@ export default {
     gaze: {
       label: "Gaze",
       description: "Fixation density and attention",
+      definition: "Where gaze is directed and how its position varies over time.",
     },
     facial: {
       label: "Facial Expressivity",
       description: "Expression intensity and variability",
+      definition: "Facial movements and their intensity and variability over time.",
     },
     vocal: {
       label: "Voice Characteristics",
       description: "Pitch and rhythm variability",
+      definition: "Characteristics of the voice, including pitch, loudness and speech timing.",
     },
     head: {
       label: "Head Movement",
       description: "Motion and posture dynamics",
+      definition: "Head position and movement over time, including nodding and horizontal motion.",
     },
     mimicry: {
       label: "Mimicry",
       description: "Temporal alignment with actress expressions",
+      definition: "Temporal coordination between the participant’s facial expressions and those of the recorded conversation partner.",
     },
   },
   learningModeBox: {
@@ -199,7 +238,7 @@ export default {
     mimicryScore: "Mimicry",
     gazeScore: "Gaze",
     headMovementScore: "Head Movement",
-    voiceScore: "Vocal Prosody",
+    voiceScore: "Voice Characteristics",
     modalityOutputsNote: "These outputs come from separate modality models. They are not feature contributions or explanations of the combined prediction.",
     maskingAlert: "Masking Alert:",
     maskingAlertText: "Patient shows high facial expressivity scores, which may indicate high compensation (camouflaging) during the first 5 minutes of SIT interaction.",
@@ -301,10 +340,14 @@ export default {
     },
   },
   learning: {
+    modalityIntroductionLinks: "See <interpretation>How to read this visualization</interpretation> and <clinical>Clinical context and research</clinical> for further guidance.",
+    visualInterpretationTitle: "Visual Interpretation",
+    goalLabel: "Goal",
+    interpretationLabel: "Interpretation",
     title: "Identifying Subtle ASC Markers in Adults",
     description: "Adults with ASC often use camouflaging to mask social difficulties. The SIT task reveals \"leakage\" in non-verbal channels that are difficult to consciously control.",
     trainingModule: "Training Module: Masking",
-    trainingDescription: "Learn to detect the discrepancy between high \"Social Reciprocity\" scores (compensatory) and atypical \"Vocal Prosody\" (objective biomarker).",
+    trainingDescription: "Learn to detect the discrepancy between high \"Social Reciprocity\" scores (compensatory) and atypical \"Voice Characteristics\" (objective biomarker).",
     identifyGaze: "Identify compensatory gaze patterns",
     analyzeMicro: "Analyze micro-expression latency",
     theoreticalFramework: "Theoretical Framework",
@@ -331,7 +374,7 @@ export default {
     differentialDiagnosis: "Differential Diagnosis Comparison",
     clinicalNote: "Clinical CDSS Note",
     maskingIndicator: "Masking Indicator (High)",
-    maskingIndicatorDesc: "The discrepancy between Social Reciprocity (40%) and Vocal Prosody (65%) suggests significant cognitive effort to mask symptoms during SIT interaction.",
+    maskingIndicatorDesc: "The discrepancy between Social Reciprocity (40%) and Voice Characteristics (65%) suggests significant cognitive effort to mask symptoms during SIT interaction.",
     differentialAlert: "Differential diagnosis alert",
     differentialAlertDesc: "High overlap with ADHD markers observed in head movement patterns. Recommend screening for executive dysfunction.",
     sitParameters: "SIT-Insight Parameters",
@@ -351,15 +394,17 @@ export default {
   },
   dataAssessment: {
     overviewTitle: "General Overview",
-    overviewBody: "The SIT recording of current case was analyzed across five behavioral modalities: facial expressivity, mimicry, gaze, head movements and voice characteristics. This page summarizes which modalities are available and provides access to detailed visualizations. Select a modality from the left sidebar to inspect the underlying behavioral visualization.",
-    multimodalFusion: "Condition-level model outputs",
+    overviewBody: "The SIT recording of current case was analyzed across five behavioral modalities: <facial/>, <mimicry/>, <gaze/>, <head/> and <vocal/>. This page summarizes which modalities are available and provides access to detailed visualizations. Select a modality from the left sidebar to inspect the underlying behavioral visualization.",
+    multimodalFusion: "Condition-specific scores",
+    scoreLabel: "Score",
+    conditionIntroduction: "The models combine behavioral measurements using associations learned from participants with and without each condition. Higher scores represent stronger predictions of the corresponding condition. Each condition has its own threshold for highlighting a result for further clinical review.",
     patientLabel: "Patient G532XHW",
     modalityPlaceholder: "Modality-specific analytics will appear here.",
     interpretationNoteTitle: "Interpretation",
     interpretationNoteBody: "These visualizations describe non-verbal behavior captured during the SIT. They are not diagnostic markers and should be interpreted together with clinical context.",
     conditionInfoLabel: "Condition model details",
-    conditionInfoBody: "This plot shows independent model scores for each condition based on non-verbal behavior captured during the SIT. Scores do not sum to 100% and should not be interpreted as diagnostic probabilities. The threshold marker on each axis indicates the model-specific cut-off above which the system flags that condition as behaviorally relevant for further clinical consideration. Passing a threshold does not confirm a diagnosis; it indicates that the SIT behavior resembles patterns associated with that condition in the training data.",
-    conditionNote: "Scores are independent model outputs and do not represent clinical diagnosis probabilities. Thresholds indicate decision cutoffs, not diagnostic criteria.",
+    conditionInfoBody: "Each condition model is trained to distinguish participants with that condition from participants without it, who may have other diagnoses.",
+    conditionNote: "Several scores may be elevated together. They are not a ranking of diagnoses or established individual diagnostic probabilities.",
     thresholdLabel: "Decision threshold",
     thresholdCrossed: "Threshold crossed",
     belowThreshold: "Below threshold",
@@ -369,7 +414,7 @@ export default {
     gazeDesc: "Measures eye contact duration and consistency during interaction with the pre-recorded actor.",
     facialExpressivity: "Facial Expressivity",
     facialDesc: "Quantifies the range and frequency of micro-expressions and emotional response.",
-    vocalProsody: "Vocal Prosody",
+    vocalProsody: "Voice Characteristics",
     vocalDesc: "Analyzes pitch variance and rhythm. Flat or atypical prosody is common in ASC.",
     headMovement: "Head Movement",
     headDesc: "Tracks coordination and excessive or restricted movement during response phases.",
@@ -721,6 +766,7 @@ export default {
   },
   learningDetails: {
     gaze: {
+      introduction: "SIT-Insight estimates gaze direction from the video and summarizes where it falls relative to the screen, using valid tracking frames. It also measures how gaze direction varies over time. These views help you describe how looking behavior is distributed during the interaction.",
       goal: "Assess how often and how long the interviewed person focuses on the conversation partner in the video",
       interpretation: "The scatter plot shows the gaze behavior of the interviewed person on the screen, the conversation partner in the video, and the environment. A single point represents the accumulated time duration that the interviewed person looks at this location in total.",
       alerts: [
@@ -750,6 +796,7 @@ export default {
     },
     facial: {
       goal: "Assess positive expression intensity during interaction with the conversation partner in the video",
+      introduction: "SIT-Insight estimates the intensity of facial movements from the video, including smile-related movements and brow lowering. It summarizes their level and variation over time. These measurements help you describe how facial expression changes during the interaction and compare patterns with reference groups.",
       interpretation: "The line chart shows the intensity of positive facial expressions (smiling) over time. The visualization is divided into three temporal phases - \"Setting the table\", \"Liked food\" and \"Disliked food\". Based on the line progression, the variability of positive facial expressions can be assessed. The current case can be compared with the data distribution of a selected reference group. The gray areas show the 1st and 2nd standard deviation of the respective reference group.",
       alerts: [
         "If persons wear glasses or masks, facial expressions cannot be fully captured.",
@@ -778,6 +825,7 @@ export default {
     },
     vocal: {
       goal: "Enables comparison of voice parameters with a reference group.",
+      introduction: "SIT-Insight extracts voice measurements from the audio, including variation in pitch and loudness and the timing of voiced speech. These measurements summarize how the voice varies across the interaction. They help you explore vocal patterns and compare them with reference groups.",
       interpretation: "The violin visualizations show the variability of the person's pitch in the three phases of the SIT. In these, \"Setting the table\", \"Liked food\" or \"Disliked food\" is discussed. The current case can be compared with the data distribution of a selected reference group. The continuous line shows the median of the reference group, meaning 50% of the reference group values are below or above this value. The dashed lines indicate the interquartile range, in which 50% of the persons in the reference group lie.",
       alerts: [
         "Values deviating from the reference group can also indicate other diagnoses (example: flat affect in depression).",
@@ -806,6 +854,7 @@ export default {
     },
     head: {
       goal: "Assess head-movement patterns during the SIT, including nodding activity and horizontal head movement.",
+      introduction: "SIT-Insight tracks head orientation in the video and summarizes its variation over time. The measurements describe the spread of up-and-down and side-to-side head angles. They help you examine movement patterns during the interaction and compare them with selected reference groups.",
       interpretation: "The visualization shows how the interviewed person’s head-movement features compare with a selected reference group. The displayed features summarize movement level and movement variability during the interaction.\n\nMean values describe the overall amount of movement. Variability values describe how stable or fluctuating the movement was over time. For example, higher nodding variability indicates more change in vertical head movement across the interaction.\n\nHead movement should be interpreted as one part of nonverbal communication. A deviation from the reference group does not indicate ASC by itself. Head movement can be influenced by posture, camera position, task engagement, anxiety, motor activity, medication, cultural communication style, or tracking quality.\n\nThere is no threshold value for head movement that clearly indicates ASC.",
       alerts: [
         "Head movement should be interpreted as one part of nonverbal communication. A deviation from the reference group does not indicate ASC by itself. Head movement can be influenced by posture, camera position, task engagement, anxiety, motor activity, medication, cultural communication style, or tracking quality.",
@@ -834,6 +883,7 @@ export default {
     },
     mimicry: {
       goal: "Assess temporal alignment between the interviewed person’s facial expressions and the conversation partner’s expressions during the SIT.",
+      introduction: "SIT-Insight compares smile-related facial movements in the participant and the recorded conversation partner, taking their timing into account. The measures summarize how closely the two expression patterns align over time. They help you examine the temporal coordination of facial behavior during the interaction.",
       interpretation: "The visualization shows how strongly the interviewed person’s smile-related facial expression patterns align with the expressions of the conversation partner in the video. Higher alignment values indicate that the person’s facial expression pattern was more similar to the interaction partner’s expression pattern within a short temporal window.\n\nThis does not mean that the person intentionally imitated the interaction partner. The visualization describes observable temporal coordination of facial behavior.",
       alerts: [
         "Lower mimicry values should not be interpreted as evidence for ASC by themselves. They may also reflect neutral affect, low overall expressivity, depression, anxiety, task engagement, individual interaction style, recording quality, or limitations of facial tracking.",

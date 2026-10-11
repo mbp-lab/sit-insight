@@ -40,8 +40,14 @@ import headWithoutAscExample from '../data/images/head-without-asc.svg';
 import appLogo from '../data/images/logo.png';
 import { modalityData } from '../data/modalityData';
 import { LearningOverview } from './components/LearningOverview';
+import { LearningSectionLink } from './components/LearningSectionLink';
+import { Prose, ExplainedText, ExpandedAbbreviations } from './components/AbbreviationHelp';
+import { HelpTooltip } from './components/HelpTooltip';
 import { InterpretationNote } from './components/InterpretationNote';
 import { PatientContextCard } from './components/PatientContextCard';
+import { ModalityDefinitionHelp, type DefinedModality } from './components/ModalityDefinitionHelp';
+import { useScoreFormatter } from './hooks/useScoreFormatter';
+import { useLearningSectionNavigation } from './hooks/useLearningSectionNavigation';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { Button } from './components/ui/button';
 
@@ -138,10 +144,10 @@ type LearningStatRow = {
 const ClinicalScopeNotice = () => (
   <div className="flex items-start gap-3 p-4 bg-amber-50 rounded-lg border border-amber-200">
     <AlertTriangle className="text-amber-600 shrink-0 mt-0.5" size={16} />
-    <p className="text-xs text-amber-900 leading-relaxed">
+    <Prose className="text-xs text-amber-900 leading-relaxed">
       This system provides decision support and does not replace clinical diagnosis. Outputs should be interpreted
       with clinical context, uncertainty, and model limitations.
-    </p>
+    </Prose>
   </div>
 );
 
@@ -527,7 +533,7 @@ const ScreeningEvaluationSummary = ({ thresholdData }: { thresholdData: any }) =
             <tr key={row.key} className="bg-white border-t border-gray-200 align-top">
               <th scope="row" className="p-4 font-normal">
                 <div className="font-semibold text-gray-900">{t(`screening.${row.key}`)}</div>
-                <p className="mt-1 text-gray-600 leading-relaxed">{t(`screening.${row.key}Description`)}</p>
+                <Prose className="mt-1 text-gray-600 leading-relaxed">{t(`screening.${row.key}Description`)}</Prose>
               </th>
               <td className="p-4 font-semibold text-gray-900">{row.value}</td>
               <td className="p-4 text-gray-700">{row.group}</td>
@@ -595,8 +601,8 @@ const ModelScoreBar = ({ value, threshold, thresholdText, aboveThreshold, compac
                 </span>
               </button>
             </TooltipTrigger>
-            <TooltipContent className="w-max max-w-[min(16rem,calc(100vw-1rem),var(--radix-tooltip-content-available-width))] whitespace-normal bg-black text-white border border-white/10 px-2 py-1 text-sm text-wrap">
-              {t('screening.thresholdTooltip')}
+            <TooltipContent className="bg-black text-white border border-white/10 text-sm">
+              <ExpandedAbbreviations>{t('screening.thresholdTooltip')}</ExpandedAbbreviations>
             </TooltipContent>
           </Tooltip>}
           <div className={`flex justify-between pointer-events-none ${threshold !== null ? 'mt-0.5' : ''} ${threshold !== null && threshold >= 10 && threshold <= 90 ? '@min-[480px]:absolute @min-[480px]:inset-x-0 @min-[480px]:top-0 @min-[480px]:mt-0' : ''}`}>
@@ -668,7 +674,7 @@ const WelcomeView = ({
               <div className="space-y-5 text-sm text-gray-700 leading-relaxed">
                 <div>
                   <h2 className="text-lg font-bold text-gray-900 mb-2">{t('welcome.whatTitle')}</h2>
-                  <p>
+                  <Prose>
                     {t('welcome.whatBody')}{' '}
                     <a
                       href="https://www.uni-bielefeld.de/fakultaeten/technische-fakultaet/arbeitsgruppen/human-centered-artificial-intelligence/tools/sit/"
@@ -679,11 +685,11 @@ const WelcomeView = ({
                       {t('welcome.sitLink')}{' '}
                       <ArrowRight size={14} className="inline -rotate-45 align-text-bottom" aria-hidden="true" />
                     </a>
-                  </p>
+                  </Prose>
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-gray-900 mb-2">{t('welcome.howTitle')}</h2>
-                  <p>
+                  <Prose>
                     <Trans
                       t={t}
                       i18nKey="welcome.howBody"
@@ -699,7 +705,7 @@ const WelcomeView = ({
                         />
                       )]))}
                     />
-                  </p>
+                  </Prose>
                 </div>
               </div>
 
@@ -748,11 +754,11 @@ const WelcomeView = ({
 
           <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-xs text-red-900">
             <AlertTriangle className="text-red-600 shrink-0 mt-0.5" size={16} />
-            <p className="leading-relaxed">
+            <Prose className="leading-relaxed">
               {t('welcome.scopeNoticePrefix')}{' '}
               <strong className="font-bold">{t('welcome.scopeNoticeEmphasis')}</strong>
               {t('welcome.scopeNoticeSuffix')}
-            </p>
+            </Prose>
           </div>
         </div>
       </section>
@@ -774,7 +780,8 @@ const ScreeningView = ({ patientData, onInspectMeasurements, onOpenLearning, lea
     '',
   ).trim();
   const modalityOutputs = patientData?.modalityOutputs;
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const formatScore = useScoreFormatter();
   const thresholdStrategy = 'high_sensitivity';
 
   const score = screeningResult?.asc_screening_score;
@@ -787,8 +794,6 @@ const ScreeningView = ({ patientData, onInspectMeasurements, onOpenLearning, lea
   // Convert the exported 0–1 values once for display; classification above stays unrounded.
   const displayScore = hasScore ? score * 100 : null;
   const displayThreshold = hasThreshold ? thresholdVal * 100 : null;
-  const scoreFormat = new Intl.NumberFormat(i18n.resolvedLanguage ?? i18n.language, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-  const formatScore = (value: number | null) => value === null ? t('screening.unavailableValue') : scoreFormat.format(value);
   const formatPerformanceValue = (value: number | undefined) =>
     typeof value === 'number' && Number.isFinite(value)
       ? value.toFixed(4)
@@ -799,19 +804,19 @@ const ScreeningView = ({ patientData, onInspectMeasurements, onOpenLearning, lea
     && typeof nNegative === 'number' && Number.isFinite(nNegative)
     ? nPositive + nNegative : null;
 
-  const modalityLabelMap: Record<string, string> = {
-    facial: t('screening.facialExpressionsScore'),
-    mimicry: t('screening.mimicryScore'),
-    gaze: t('screening.gazeScore'),
-    head: t('screening.headMovementScore'),
-    audio: t('screening.voiceScore'),
+  const modalityDefinitionMap: Record<string, DefinedModality> = {
+    facial: 'facial',
+    mimicry: 'mimicry',
+    gaze: 'gaze',
+    head: 'head',
+    audio: 'vocal',
   };
 
   return (
     <div className="p-6 sm:p-8 max-w-6xl mx-auto space-y-8 break-words">
       <section aria-labelledby="screening-result-title">
         <h1 id="screening-result-title" className="text-2xl font-bold text-gray-900 mb-3">{t('screening.title')}</h1>
-        <p className="text-sm text-gray-600 leading-relaxed mb-6">{t('screening.introduction')}</p>
+        <Prose className="text-sm text-gray-600 leading-relaxed mb-6">{t('screening.introduction')}</Prose>
         <div className="p-6 bg-white border border-gray-100 rounded-xl shadow-xs">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-6">
             <h2 className="text-lg font-bold text-gray-900">{t('screening.resultHeading')}</h2>
@@ -827,19 +832,19 @@ const ScreeningView = ({ patientData, onInspectMeasurements, onOpenLearning, lea
               <span className="text-lg text-teal-700 font-semibold">{t('screening.likelihoodOfASC')}:</span>
               <span className={hasScore ? "text-2xl font-bold text-teal-600" : "text-lg font-semibold text-gray-500"}>{formatScore(displayScore)}</span>
             </div>
-            <p className="text-sm text-gray-500">{t('screening.scaleLabel')}</p>
+            <Prose className="text-sm text-gray-500">{t('screening.scaleLabel')}</Prose>
           </div>
 
           {displayScore !== null && <ModelScoreBar value={displayScore} threshold={displayThreshold} thresholdText={formatScore(displayThreshold)} aboveThreshold={isAboveThreshold} />}
-          <p className="mt-2 text-sm text-gray-700 leading-relaxed">{t('screening.scoreExplanation')}</p>
+          <Prose className="mt-2 text-sm text-gray-700 leading-relaxed">{t('screening.scoreExplanation')}</Prose>
           <InterpretationNote className="mt-4" title={t('screening.interpretationTitle')} headingAs="h3">
-            <p>{t('screening.interpretationBody')}</p>
+            <Prose>{t('screening.interpretationBody')}</Prose>
             {isAboveThreshold === null && (
-              <p className="mt-2">{t('screening.resultUnavailableBody')}</p>
+              <Prose className="mt-2">{t('screening.resultUnavailableBody')}</Prose>
             )}
           </InterpretationNote>
           {screeningNote && (
-            <p className="mt-4 text-sm text-gray-700 leading-relaxed">{screeningNote}</p>
+            <Prose className="mt-4 text-sm text-gray-700 leading-relaxed">{screeningNote}</Prose>
           )}
           <button
             type="button"
@@ -855,10 +860,10 @@ const ScreeningView = ({ patientData, onInspectMeasurements, onOpenLearning, lea
           <summary className="cursor-pointer text-sm font-bold text-gray-900">
             {t('screening.modalityOutputsTitle')}
           </summary>
-          <p className="mt-3 mb-4 text-sm text-gray-700 leading-relaxed">{t('screening.modalityOutputsNote')}</p>
+          <Prose className="mt-3 mb-4 text-sm text-gray-700 leading-relaxed">{t('screening.modalityOutputsNote')}</Prose>
           <div className="space-y-3 text-sm text-gray-700">
             {modalityOutputs?.screening_modality_outputs?.map((item) => {
-              const label = modalityLabelMap[item.modality] || item.modality;
+              const definedModality = modalityDefinitionMap[item.modality];
               const hasModalityScore = typeof item.screening_score === 'number' && Number.isFinite(item.screening_score);
               const hasModalityThreshold = typeof item.threshold === 'number' && Number.isFinite(item.threshold);
               const hasModalityClassification = hasModalityScore && hasModalityThreshold && typeof item.above_threshold === 'boolean';
@@ -868,7 +873,9 @@ const ScreeningView = ({ patientData, onInspectMeasurements, onOpenLearning, lea
               return (
                 <div key={item.modality} className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="min-w-0 font-semibold text-gray-800">{label}</span>
+                    <span className="min-w-0 font-semibold text-gray-800">
+                      {definedModality ? <ModalityDefinitionHelp modality={definedModality} /> : item.modality}
+                    </span>
                     <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-2 text-sm">
                       {hasModalityClassification && item.above_threshold && <ThresholdStatusBadge aboveThreshold />}
                       <span className={`text-right tabular-nums font-semibold ${hasModalityClassification && item.above_threshold ? 'text-red-500 font-bold' : 'text-gray-900'}`}>
@@ -888,7 +895,7 @@ const ScreeningView = ({ patientData, onInspectMeasurements, onOpenLearning, lea
             })}
           </div>
           {!modalityOutputs?.screening_modality_outputs?.length && (
-            <p className="text-sm text-gray-500">{t('screening.unavailableValue')}</p>
+            <Prose className="text-sm text-gray-500">{t('screening.unavailableValue')}</Prose>
           )}
         </details>
 
@@ -899,11 +906,11 @@ const ScreeningView = ({ patientData, onInspectMeasurements, onOpenLearning, lea
           <div className="mt-4 space-y-4 text-sm text-gray-700 leading-relaxed">
             <div>
               <h3 className="font-semibold text-gray-900">{t('screening.howToRead.scoreTitle')}</h3>
-              <p className="mt-1">{t('screening.howToRead.scoreBody')}</p>
+              <Prose className="mt-1">{t('screening.howToRead.scoreBody')}</Prose>
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">{t('screening.howToRead.thresholdTitle')}</h3>
-              <p className="mt-1">{t('screening.howToRead.thresholdBody')}</p>
+              <Prose className="mt-1">{t('screening.howToRead.thresholdBody')}</Prose>
             </div>
             <a
               href={learningExplanationHref}
@@ -924,10 +931,10 @@ const ScreeningView = ({ patientData, onInspectMeasurements, onOpenLearning, lea
           <summary className="cursor-pointer text-sm font-bold text-gray-900">
             {t('screening.modelPerformanceTitle')}
           </summary>
-          <p className="mt-3 text-sm text-gray-700 leading-relaxed mb-4">
+          <Prose className="mt-3 text-sm text-gray-700 leading-relaxed mb-4">
             {t('screening.modelPerformanceBody')}
-          </p>
-          <p className="mb-3 text-sm font-semibold text-gray-700">{sampleSize === null ? t('screening.unavailableValue') : t('screening.evaluation.sampleSize', { count: sampleSize })}</p>
+          </Prose>
+          <Prose className="mb-3 text-sm font-semibold text-gray-700">{sampleSize === null ? t('screening.unavailableValue') : t('screening.evaluation.sampleSize', { count: sampleSize })}</Prose>
           <ScreeningEvaluationSummary thresholdData={selectedThresholdData} />
 
           <details className="mt-4 rounded-lg border border-gray-200 bg-white p-4">
@@ -935,8 +942,8 @@ const ScreeningView = ({ patientData, onInspectMeasurements, onOpenLearning, lea
             <div className="mt-4 space-y-4 text-sm text-gray-700 leading-relaxed">
               <div>
                 <h3 className="font-semibold text-gray-900">{t('screening.evaluation.procedureTitle')}</h3>
-                <p className="mt-1">{t(selectedThresholdData?.estimated_from === 'training_out_of_fold_loocv' ? 'screening.evaluation.procedureLoocv' : 'screening.evaluation.procedureUnknown')}</p>
-                {selectedThresholdData?.estimated_from === 'training_out_of_fold_loocv' && <p className="mt-2">{t('screening.evaluation.procedureFinalFit')}</p>}
+                <Prose className="mt-1">{t(selectedThresholdData?.estimated_from === 'training_out_of_fold_loocv' ? 'screening.evaluation.procedureLoocv' : 'screening.evaluation.procedureUnknown')}</Prose>
+                {selectedThresholdData?.estimated_from === 'training_out_of_fold_loocv' && <Prose className="mt-2">{t('screening.evaluation.procedureFinalFit')}</Prose>}
                 <p className="mt-1 break-words text-gray-600">{t('screening.evaluation.procedureSource')}: {selectedThresholdData?.estimated_from ?? t('screening.unavailableValue')}</p>
               </div>
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -945,16 +952,16 @@ const ScreeningView = ({ patientData, onInspectMeasurements, onOpenLearning, lea
                     <dt className="font-semibold text-gray-900">{t(`screening.evaluation.${metric}Label`)}</dt>
                     <dd className="mt-1">
                       <span className="text-base font-bold text-gray-900">{formatPerformanceValue(selectedThresholdData?.[metric])}</span>
-                      <p className="mt-1">{t(`screening.evaluation.${metric}Description`)}</p>
+                      <Prose className="mt-1">{t(`screening.evaluation.${metric}Description`)}</Prose>
                     </dd>
                   </div>
                 ))}
               </dl>
-              <p>{t('screening.evaluation.auprcMethodNote')}</p>
-              <p>{t('screening.evaluation.countCalculation')}</p>
+              <Prose>{t('screening.evaluation.auprcMethodNote')}</Prose>
+              <Prose>{t('screening.evaluation.countCalculation')}</Prose>
               <div>
                 <h3 className="font-semibold text-gray-900">{t('screening.modelLabel')}: <span className="break-words">{screeningResult?.model_version ?? t('screening.unavailableValue')}</span></h3>
-                <p className="mt-1">{t('screening.evaluation.modelDescription')}</p>
+                <Prose className="mt-1">{t('screening.evaluation.modelDescription')}</Prose>
               </div>
             </div>
           </details>
@@ -971,14 +978,14 @@ const LearningView = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <h2 className="text-xl font-bold text-gray-900">{t('learning.title')}</h2>
-          <p className="text-sm text-gray-600 max-w-2xl">
+          <Prose className="text-sm text-gray-600 max-w-2xl">
             {t('learning.description')}
-          </p>
+          </Prose>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {BEHAVIORAL_TRAITS.map((trait) => (
               <div key={trait.trait} className="p-5 bg-white border border-gray-100 rounded-xl shadow-sm hover:border-teal-200 transition-colors group">
                 <div className="flex justify-between items-center mb-3">
-                  <span className="font-semibold text-gray-800">{trait.trait}</span>
+                  <span className="font-semibold text-gray-800">{trait.trait === 'Vocal Prosody' ? t('modalities.vocal.label') : trait.trait}</span>
                   <Info size={16} className="text-gray-300 group-hover:text-teal-500 cursor-help" />
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-3">
@@ -987,7 +994,7 @@ const LearningView = () => {
                     style={{ width: `${trait.patient}%` }}
                   />
                 </div>
-                <p className="text-xs text-gray-500 leading-relaxed">{trait.educational}</p>
+                <Prose className="text-xs text-gray-500 leading-relaxed">{trait.educational}</Prose>
               </div>
             ))}
           </div>
@@ -997,9 +1004,9 @@ const LearningView = () => {
           <div className="bg-teal-900 text-white p-6 rounded-2xl">
             <GraduationCap className="mb-4 text-teal-300" size={32} />
             <h3 className="text-lg font-bold mb-2">{t('learning.trainingModule')}</h3>
-            <p className="text-sm text-teal-100 leading-relaxed mb-4">
+            <Prose className="text-sm text-teal-100 leading-relaxed mb-4">
               {t('learning.trainingDescription')}
-            </p>
+            </Prose>
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-xs bg-teal-800/50 p-2 rounded-lg">
                 <div className="w-2 h-2 rounded-full bg-teal-400" />
@@ -1020,11 +1027,11 @@ const LearningView = () => {
             <div className="space-y-4">
               <div className="text-sm">
                 <div className="font-semibold text-gray-700 mb-1">{t('learning.camouflaging')}</div>
-                <p className="text-gray-500 text-xs leading-relaxed">{t('learning.camouflaguingDesc')}</p>
+                <Prose className="text-gray-500 text-xs leading-relaxed">{t('learning.camouflaguingDesc')}</Prose>
               </div>
               <div className="text-sm">
                 <div className="font-semibold text-gray-700 mb-1">{t('learning.digitalBiomarkers')}</div>
-                <p className="text-gray-500 text-xs leading-relaxed">{t('learning.digitalBiomarkersDesc')}</p>
+                <Prose className="text-gray-500 text-xs leading-relaxed">{t('learning.digitalBiomarkersDesc')}</Prose>
               </div>
             </div>
           </div>
@@ -1037,91 +1044,91 @@ const LearningView = () => {
 const DataAssessmentView = ({ activeMode, patientData }: { activeMode?: ViewMode | null; patientData: PatientData }) => {
   const { multilabelConditionOutputs } = patientData;
   const { t } = useTranslation();
-
-  const conditionLabelMap: Record<string, string> = {
-    ASD: 'Autism (ASC)',
-    ADHD: 'ADHD',
-    MDD: 'Depression (MDD)',
-    SAD: 'Social Anxiety (SAD)',
-  };
-
-  const chartData = multilabelConditionOutputs.conditions.map((c: any) => ({
-    condition: conditionLabelMap[c.condition] || c.condition,
-    score: Math.round(c.score * 100),
-    threshold: Math.round(c.threshold * 100),
-  }));
+  const formatScore = useScoreFormatter();
+  const [conditionInfoOpen, setConditionInfoOpen] = useState(false);
 
   return (
     <div className="p-6 sm:p-8 max-w-6xl mx-auto space-y-8">
       {activeMode === 'learning' && (
         <section>
           <h2 className="text-xl font-bold text-gray-900 mb-4">{t('learningModeBox.title')}</h2>
-          <p className="text-sm text-gray-600 leading-relaxed">
+          <Prose className="text-sm text-gray-600 leading-relaxed">
             {t('learningModeBox.body')}
-          </p>
+          </Prose>
         </section>
       )}
       <section>
         <h1 className="text-2xl font-bold text-gray-900 mb-4">{t('dataAssessment.overviewTitle')}</h1>
-        <p className="text-sm text-gray-600 leading-relaxed">
-          {t('dataAssessment.overviewBody')}
-        </p>
+        <Prose className="text-sm text-gray-600 leading-relaxed">
+          <Trans i18nKey="dataAssessment.overviewBody" components={{
+            facial: <ModalityDefinitionHelp modality="facial" />,
+            mimicry: <ModalityDefinitionHelp modality="mimicry" />,
+            gaze: <ModalityDefinitionHelp modality="gaze" />,
+            head: <ModalityDefinitionHelp modality="head" />,
+            vocal: <ModalityDefinitionHelp modality="vocal" />,
+          }} />
+        </Prose>
       </section>
       <InterpretationNote title={t('dataAssessment.interpretationNoteTitle')}>
-        <p>{t('dataAssessment.interpretationNoteBody')}</p>
+        <Prose>{t('dataAssessment.interpretationNoteBody')}</Prose>
       </InterpretationNote>
       <div className="grid grid-cols-1 gap-8">
         <section className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center gap-2 mb-3">
             <div className="flex items-center gap-4">
               <h3 className="font-bold text-gray-900 flex items-center gap-2">
                 <Layers size={18} className="text-teal-600" />
                 {t('dataAssessment.multimodalFusion')}
               </h3>
             </div>
-            <Tooltip>
+            <Tooltip open={conditionInfoOpen} onOpenChange={setConditionInfoOpen}>
               <TooltipTrigger asChild>
                 <button
                   type="button"
                   className="p-1.5 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
                   aria-label={t('dataAssessment.conditionInfoLabel')}
+                  onClick={(event) => { event.preventDefault(); setConditionInfoOpen(true); }}
                 >
                   <Info size={14} />
                 </button>
               </TooltipTrigger>
-              <TooltipContent sideOffset={8} className="bg-black text-white border border-white/10 max-w-xs">
-                {t('dataAssessment.conditionInfoBody')}
+              <TooltipContent sideOffset={8} className="bg-black text-white border border-white/10 text-sm leading-relaxed">
+                <ExpandedAbbreviations>{t('dataAssessment.conditionInfoBody')}</ExpandedAbbreviations>
               </TooltipContent>
             </Tooltip>
           </div>
+          <Prose className="mb-6 text-sm text-gray-600 leading-relaxed">{t('dataAssessment.conditionIntroduction')}</Prose>
           <div className="grid gap-4 md:grid-cols-2 mb-6">
             {multilabelConditionOutputs.conditions.map((item) => {
-              const pctScore = Math.round(item.score * 100);
-              const pctThreshold = Math.round(item.threshold * 100);
+              const hasScore = typeof item.score === 'number' && Number.isFinite(item.score);
+              const hasThreshold = typeof item.threshold === 'number' && Number.isFinite(item.threshold);
+              const hasClassification = hasScore && hasThreshold && typeof item.crosses_threshold === 'boolean';
+              // Use the same exported fields as before; convert once without rounding the bar or changing the exported flag.
+              const displayScore = hasScore ? item.score * 100 : null;
+              const displayThreshold = hasThreshold ? item.threshold * 100 : null;
               return (
                 <div key={item.condition} className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 space-y-2">
                   <div className="flex flex-wrap justify-between items-center gap-2">
                     <span className="font-bold text-gray-800 text-sm">{item.condition_display}</span>
-                    <ThresholdStatusBadge aboveThreshold={item.crosses_threshold} />
+                    {hasClassification && <ThresholdStatusBadge aboveThreshold={item.crosses_threshold} />}
                   </div>
                   <div className="flex justify-between text-xs text-gray-600">
-                    <span>Probability Score: <span className="font-semibold text-gray-900">{pctScore}%</span></span>
+                    <span>{t('dataAssessment.scoreLabel')}: <span className="font-semibold text-gray-900">{formatScore(displayScore)}</span></span>
                   </div>
-                  <ModelScoreBar
-                    value={pctScore}
-                    threshold={pctThreshold}
-                    thresholdText={`${pctThreshold}%`}
-                    aboveThreshold={item.crosses_threshold}
-                    unitSuffix="%"
+                  {displayScore !== null && <ModelScoreBar
+                    value={displayScore}
+                    threshold={displayThreshold}
+                    thresholdText={formatScore(displayThreshold)}
+                    aboveThreshold={hasClassification ? item.crosses_threshold : null}
                     compact
-                  />
+                  />}
                 </div>
               );
             })}
           </div>
-          <p className="mt-4 text-xs text-gray-500 leading-relaxed">
-            Scores are independent model outputs and do not represent clinical diagnosis probabilities. Thresholds indicate decision cutoffs, not diagnostic criteria.
-          </p>
+          <Prose className="mt-4 text-xs text-gray-500 leading-relaxed">
+            {t('dataAssessment.conditionNote')}
+          </Prose>
         </section>
       </div>
     </div>
@@ -1147,6 +1154,11 @@ const DataModalityView = ({
 }) => {
   const { caseId, patientDeviations } = patientData;
   const { t } = useTranslation();
+  const showLearningSection = useLearningSectionNavigation(`${activeMode}/${modality}`);
+  const interpretationSectionId = `learning-${modality}-interpretation`;
+  const interpretationTitleId = `${interpretationSectionId}-title`;
+  const clinicalSectionId = `learning-${modality}-clinical`;
+  const clinicalTitleId = `${clinicalSectionId}-title`;
   const label = t(`modalities.${modality}.label`);
   const description = t(`modalities.${modality}.description`);
   const data = modality === 'overview' ? null : modalityData[modality] as any;
@@ -1293,7 +1305,7 @@ const DataModalityView = ({
     return (
       <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700 leading-relaxed">
         <div className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">{title}</div>
-        {body}
+        <ExplainedText>{body}</ExplainedText>
       </div>
     );
   };
@@ -1394,7 +1406,7 @@ const DataModalityView = ({
         {modality === 'gaze' && (
           <div className="rounded-lg border border-amber-100 bg-amber-50 p-4 text-sm text-amber-900 flex items-start gap-3">
             <AlertTriangle className="text-amber-600 shrink-0 mt-0.5" size={16} />
-            <p>{t('gazeView.alertText')}</p>
+            <Prose>{t('gazeView.alertText')}</Prose>
           </div>
         )}
 
@@ -1403,7 +1415,7 @@ const DataModalityView = ({
           <div className="flex items-start justify-between gap-4 mb-4">
             <div>
               <h2 className="text-xl font-bold text-gray-900">{t(`${modality}View.title`)}</h2>
-              <p className="text-xs text-gray-500">{t(`${modality}View.subtitle`)}</p>
+              <Prose className="text-xs text-gray-500">{t(`${modality}View.subtitle`)}</Prose>
             </div>
             <div className="flex items-center gap-3">
               {modality === 'facial' && (
@@ -1421,20 +1433,18 @@ const DataModalityView = ({
                   </Select>
                 </div>
               )}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    className="p-1.5 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors shrink-0"
-                    aria-label={t(`${modality}View.infoLabel`)}
-                  >
-                    <Info size={14} />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent sideOffset={8} className="bg-black text-white border border-white/10 max-w-xs text-xs">
-                  {t(`${modality}View.infoBody`)}
-                </TooltipContent>
-              </Tooltip>
+              <HelpTooltip
+                content={<ExpandedAbbreviations>{t(`${modality}View.infoBody`)}</ExpandedAbbreviations>}
+                className="bg-black text-white border border-white/10 text-xs"
+              >
+                <button
+                  type="button"
+                  className="p-1.5 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors shrink-0"
+                  aria-label={t(`${modality}View.infoLabel`)}
+                >
+                  <Info size={14} aria-hidden="true" />
+                </button>
+              </HelpTooltip>
             </div>
           </div>
 
@@ -1476,16 +1486,14 @@ const DataModalityView = ({
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-gray-900">{t("features." + row.feature_id + ".name", row.display_name)}</span>
                           {row.tooltip && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button type="button" className="p-0.5 text-gray-400 hover:text-gray-600 transition-colors">
-                                  <Info size={12} />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent className="bg-black text-white border border-white/10 max-w-xs text-xs">
-                                {t("features." + row.feature_id + ".tooltip", row.tooltip)}
-                              </TooltipContent>
-                            </Tooltip>
+                            <HelpTooltip
+                              content={<ExpandedAbbreviations>{t("features." + row.feature_id + ".tooltip", row.tooltip)}</ExpandedAbbreviations>}
+                              className="bg-black text-white border border-white/10 text-xs"
+                            >
+                              <button type="button" aria-label={t("features." + row.feature_id + ".name", row.display_name)} className="p-0.5 text-gray-400 hover:text-gray-600 transition-colors">
+                                <Info size={12} aria-hidden="true" />
+                              </button>
+                            </HelpTooltip>
                           )}
                         </div>
                         <div className="text-xs text-gray-500">{t("features." + row.feature_id + ".unit", row.unit)}</div>
@@ -1510,7 +1518,7 @@ const DataModalityView = ({
 
           <h4 className="text-sm font-bold text-gray-900 mt-6 mb-2">{t('facialView.closestReferenceHeading')}</h4>
           <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700 leading-relaxed">
-            {t('facialView.closestReferenceNote')}
+            <ExplainedText>{t('facialView.closestReferenceNote')}</ExplainedText>
           </div>
 
           {/* Closest Reference Context Table */}
@@ -1561,7 +1569,7 @@ const DataModalityView = ({
             </div>
 
             <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700 leading-relaxed">
-              {t('referenceGroup.referenceDatasetNote')}
+              <ExplainedText>{t('referenceGroup.referenceDatasetNote')}</ExplainedText>
             </div>
 
             <div className="rounded-lg border border-teal-100 bg-teal-50 p-3 text-xs text-teal-900 mb-4 space-y-1 mt-4">
@@ -1771,9 +1779,9 @@ const DataModalityView = ({
               </div>
             </div>
           </div>
-          <p className="text-sm text-gray-600 mb-6">
+          <Prose className="text-sm text-gray-600 mb-6">
             {t('learning.exampleReferencePatternsDesc')}
-          </p>
+          </Prose>
 
           {/* Facial Signal Dropdown (if Facial) */}
           {modality === 'facial' && (
@@ -1807,39 +1815,39 @@ const DataModalityView = ({
             </div>
           </div>
           <div className="mt-6 p-3 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-800">
-            {t('learning.noteBox')}
+            <ExplainedText>{t('learning.noteBox')}</ExplainedText>
           </div>
         </section>
 
-        <section className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Visual Interpretation</h2>
+        <section id={interpretationSectionId} aria-labelledby={interpretationTitleId} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+          <h2 id={interpretationTitleId} tabIndex={-1} className="scroll-mt-4 text-xl font-bold text-gray-900 mb-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-600">{t('learning.visualInterpretationTitle')}</h2>
           <div className="space-y-4 text-sm text-gray-700 leading-relaxed">
             <div>
-              <div className="text-xs uppercase tracking-widest text-gray-400 font-bold">Goal</div>
-              <p className="mt-2">{content.goal}</p>
+              <div className="text-xs uppercase tracking-widest text-gray-400 font-bold">{t('learning.goalLabel')}</div>
+              <Prose className="mt-2">{content.goal}</Prose>
             </div>
             <div>
-              <div className="text-xs uppercase tracking-widest text-gray-400 font-bold">Interpretation</div>
-              <p className="mt-2">{content.interpretation}</p>
+              <div className="text-xs uppercase tracking-widest text-gray-400 font-bold">{t('learning.interpretationLabel')}</div>
+              <Prose className="mt-2">{content.interpretation}</Prose>
             </div>
           </div>
           <div className="mt-6 space-y-3">
             {content.alerts.map((alert) => (
               <div key={alert} className="flex items-start gap-3 p-4 bg-orange-50/50 rounded-lg border border-orange-100">
                 <AlertTriangle className="text-orange-500 shrink-0 mt-0.5" size={18} />
-                <p className="text-sm text-orange-800">{alert}</p>
+                <Prose className="text-sm text-orange-800">{alert}</Prose>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">{content.clinicalTitle}</h3>
+        <section id={clinicalSectionId} aria-labelledby={clinicalTitleId} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+          <h3 id={clinicalTitleId} tabIndex={-1} className="scroll-mt-4 text-lg font-bold text-gray-900 mb-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-600">{content.clinicalTitle}</h3>
           <div className="space-y-4 text-sm text-gray-700">
             {content.clinicalItems.map((item) => (
               <div key={item.title}>
                 <div className="text-xs uppercase tracking-widest text-gray-400 font-bold">{item.title}</div>
-                <p className="mt-2">{item.body}</p>
+                <Prose className="mt-2">{item.body}</Prose>
               </div>
             ))}
           </div>
@@ -1847,7 +1855,7 @@ const DataModalityView = ({
 
         <section className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
           <h3 className="text-lg font-bold text-gray-900 mb-3">{t('learning.dataCollectionTitle', 'Data Collection')}</h3>
-          <p className="text-sm text-gray-700 leading-relaxed">{content.dataCollection}</p>
+          <Prose className="text-sm text-gray-700 leading-relaxed">{content.dataCollection}</Prose>
         </section>
 
         {/* Group Statistics Summary */}
@@ -1917,7 +1925,7 @@ const DataModalityView = ({
           </div>
 
           <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700 leading-relaxed mb-4">
-            {t('referenceGroup.referenceDatasetNote')}
+            <ExplainedText>{t('referenceGroup.referenceDatasetNote')}</ExplainedText>
           </div>
 
           <div className="rounded-lg border border-teal-100 bg-teal-50 p-3 text-xs text-teal-900 mb-4 space-y-1">
@@ -1984,6 +1992,16 @@ const DataModalityView = ({
 
     return (
       <div className="p-8 max-w-7xl mx-auto space-y-8">
+        <section aria-labelledby={`learning-${modality}-title`} className="space-y-3">
+          <h1 id={`learning-${modality}-title`} className="text-2xl font-bold text-gray-900">{label}</h1>
+          <Prose className="text-sm text-gray-600 leading-relaxed">{t(`learningDetails.${modality}.introduction`)}</Prose>
+          <Prose className="text-sm text-gray-600 leading-relaxed">
+            <Trans i18nKey="learning.modalityIntroductionLinks" components={{
+              interpretation: <LearningSectionLink targetId={interpretationTitleId} onClick={(event) => showLearningSection(event, interpretationTitleId, interpretationSectionId)} />,
+              clinical: <LearningSectionLink targetId={clinicalTitleId} onClick={(event) => showLearningSection(event, clinicalTitleId, clinicalSectionId)} />,
+            }} />
+          </Prose>
+        </section>
         {renderLearningContent(content)}
       </div>
     );
@@ -2001,7 +2019,7 @@ const DataModalityView = ({
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">{label}</h2>
-              <p className="text-xs text-gray-500">{description}</p>
+              <Prose className="text-xs text-gray-500">{description}</Prose>
             </div>
           </div>
           <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-sm text-gray-500">
@@ -2244,9 +2262,9 @@ export default function App() {
               <Lock className="text-teal-400" size={28} />
             </div>
             <h1 className="text-2xl font-extrabold text-white tracking-tight">{t('portal.title')}</h1>
-            <p className="text-sm text-gray-400">
+            <Prose className="text-sm text-gray-400">
               {t('portal.subtitle')}
-            </p>
+            </Prose>
           </div>
 
           <form onSubmit={handleLoginSubmit} className="space-y-4">
@@ -2268,10 +2286,10 @@ export default function App() {
                 autoFocus
               />
               {loginError && (
-                <p className="text-xs text-red-400 font-semibold flex items-center gap-1 mt-1">
+                <Prose className="text-xs text-red-400 font-semibold flex items-center gap-1 mt-1">
                   <AlertTriangle size={12} />
                   {t('portal.error')}
-                </p>
+                </Prose>
               )}
             </div>
 
@@ -2285,7 +2303,7 @@ export default function App() {
           </form>
 
           <div className="text-[11px] text-gray-500 text-center leading-relaxed">
-            {t('portal.disclaimer')}
+            <ExplainedText>{t('portal.disclaimer')}</ExplainedText>
           </div>
         </div>
       </div>
@@ -2350,26 +2368,24 @@ export default function App() {
                           </span>
                         </button>
                       </TooltipTrigger>
-                      <TooltipContent sideOffset={8} className={`w-max max-w-[calc(100vw-1rem)] bg-black text-white border border-white/10 px-2 py-1 text-xs text-wrap ${activeMode === mode.id ? 'lg:hidden' : '2xl:hidden'}`}>
+                      <TooltipContent sideOffset={8} className={`bg-black text-white border border-white/10 text-xs ${activeMode === mode.id ? 'lg:hidden' : '2xl:hidden'}`}>
                         {mode.label}
                       </TooltipContent>
                     </Tooltip>
                   ))}
                 </div>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      className="p-1.5 rounded-full text-gray-300 hover:text-white hover:bg-white/10 transition-colors shrink-0"
-                      aria-label={t('settings.analysisModeInfo')}
-                    >
-                      <Info size={14} />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent sideOffset={8} className="bg-black text-white border border-white/10 max-w-xs">
-                    {t('settings.analysisModeInfo')}
-                  </TooltipContent>
-                </Tooltip>
+                <HelpTooltip
+                  content={<ExpandedAbbreviations>{t('settings.analysisModeInfo')}</ExpandedAbbreviations>}
+                  className="bg-black text-white border border-white/10"
+                >
+                  <button
+                    type="button"
+                    className="p-1.5 rounded-full text-gray-300 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+                    aria-label={t('settings.analysisModeInfo')}
+                  >
+                    <Info size={14} aria-hidden="true" />
+                  </button>
+                </HelpTooltip>
               </div>
             </>
           )}
