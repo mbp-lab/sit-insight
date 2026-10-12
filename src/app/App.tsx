@@ -41,6 +41,8 @@ import appLogo from '../data/images/logo.png';
 import { modalityData } from '../data/modalityData';
 import { LearningOverview } from './components/LearningOverview';
 import { LearningSectionLink } from './components/LearningSectionLink';
+import { FacialFeatureLabel } from './components/FacialFeatureLabel';
+import { FacialGroupStatistics } from './components/FacialGroupStatistics';
 import { Prose, ExplainedText, ExpandedAbbreviations } from './components/AbbreviationHelp';
 import { HelpTooltip } from './components/HelpTooltip';
 import { InterpretationNote } from './components/InterpretationNote';
@@ -48,6 +50,7 @@ import { PatientContextCard } from './components/PatientContextCard';
 import { ModalityDefinitionHelp, type DefinedModality } from './components/ModalityDefinitionHelp';
 import { useScoreFormatter } from './hooks/useScoreFormatter';
 import { useLearningSectionNavigation } from './hooks/useLearningSectionNavigation';
+import { ENABLE_PAIRWISE_GROUP_COMPARISONS } from './config/researchFeatures';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { Button } from './components/ui/button';
 
@@ -1143,6 +1146,8 @@ const DataModalityView = ({
   gender,
   setGender,
   patientData,
+  learningMeasurementsHref,
+  onOpenLearningMeasurements,
 }: {
   modality: Modality;
   activeMode: ViewMode;
@@ -1151,6 +1156,8 @@ const DataModalityView = ({
   gender: GenderBaseline;
   setGender: (g: GenderBaseline) => void;
   patientData: PatientData;
+  learningMeasurementsHref: string;
+  onOpenLearningMeasurements: () => void;
 }) => {
   const { caseId, patientDeviations } = patientData;
   const { t } = useTranslation();
@@ -1283,18 +1290,25 @@ const DataModalityView = ({
   };
 
   const renderInterpretabilityFootnote = () => {
-    const title = modality === 'facial'
-      ? t('facialView.computationTitle')
-      : modality === 'mimicry'
+    if (modality === 'facial') {
+      return <a
+        href={learningMeasurementsHref}
+        onClick={event => {
+          if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          event.preventDefault();
+          onOpenLearningMeasurements();
+        }}
+        className="mt-4 inline-block text-sm text-teal-700 underline underline-offset-4 hover:text-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
+      >{t('facialView.learningLink')}</a>;
+    }
+    const title = modality === 'mimicry'
         ? t('mimicryView.computationTitle')
         : modality === 'gaze'
           ? t('gazeView.computationTitle')
           : modality === 'vocal'
             ? t('vocalView.computationTitle')
             : t('referenceGroup.howComputed');
-    const body = modality === 'facial'
-      ? t('facialView.computationBody')
-      : modality === 'mimicry'
+    const body = modality === 'mimicry'
         ? t('mimicryView.computationBody')
         : modality === 'gaze'
           ? t('gazeView.computationBody')
@@ -1412,17 +1426,17 @@ const DataModalityView = ({
 
         {/* Visual Plot Card */}
         <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-          <div className="flex items-start justify-between gap-4 mb-4">
+          <div className={`flex ${modality === 'facial' ? 'flex-wrap ' : ''}items-start justify-between gap-4 mb-4`}>
             <div>
               <h2 className="text-xl font-bold text-gray-900">{t(`${modality}View.title`)}</h2>
               <Prose className="text-xs text-gray-500">{t(`${modality}View.subtitle`)}</Prose>
             </div>
             <div className="flex items-center gap-3">
               {modality === 'facial' && (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs font-semibold text-gray-700">{t('facialView.signalLabel')}:</span>
                   <Select value={facialSignal} onValueChange={(value) => setFacialSignal(value as 'smile' | 'disgust' | 'all')}>
-                    <SelectTrigger className="data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex items-center justify-between gap-2 rounded-md border px-3 py-2 whitespace-nowrap outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 w-28 h-9 bg-gray-50 border-gray-200 text-gray-900 text-xs hover:bg-gray-100 transition-colors">
+                    <SelectTrigger className="data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex items-center justify-between gap-2 rounded-md border px-3 py-2 whitespace-nowrap outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 w-44 h-9 bg-gray-50 border-gray-200 text-gray-900 text-xs hover:bg-gray-100 transition-colors">
                       <SelectValue placeholder={t('facialView.signalLabel')} />
                     </SelectTrigger>
                     <SelectContent className="bg-white border-gray-200 text-gray-900">
@@ -1449,6 +1463,10 @@ const DataModalityView = ({
           </div>
 
 
+          {modality === 'facial' && <div className="mb-4 space-y-2 text-sm text-gray-600 leading-relaxed">
+            <Prose>{t('facialView.caseDefinition')}</Prose>
+            <Prose>{t('facialView.signalHelp')}</Prose>
+          </div>}
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
             <img
               src={getCaseImage(modality as Exclude<Modality, 'overview'>, referenceGroup, gender, modality === 'facial' ? facialSignal : undefined)}
@@ -1456,12 +1474,17 @@ const DataModalityView = ({
               className="w-full h-auto"
             />
           </div>
+          {modality === 'facial' && <Prose className="mt-3 text-sm text-gray-600 leading-relaxed">{t('facialView.plotLegend')}</Prose>}
         </div>
 
         {/* Feature Comparison Table */}
         <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
           <h3 className="text-lg font-bold text-gray-900 mb-4">{t('referenceGroup.featureComparisonTitle')}</h3>
-          <div className="overflow-hidden rounded-xl border border-gray-100">
+          {modality === 'facial' && <div className="mb-4 space-y-2 text-sm text-gray-600 leading-relaxed">
+            <Prose>{t('facialView.selectorTableNote')}</Prose>
+            <Prose>{t('facialView.featureFamilies')}</Prose>
+          </div>}
+          <div className={`${modality === 'facial' ? 'overflow-x-auto' : 'overflow-hidden'} rounded-xl border border-gray-100`}>
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 text-gray-500">
@@ -1483,7 +1506,7 @@ const DataModalityView = ({
                   return (
                     <tr key={row.feature_id} className={index === 0 ? 'border-t border-gray-100' : ''}>
                       <td className="p-4 text-gray-700 align-top">
-                        <div className="flex items-center gap-2">
+                        {modality === 'facial' ? <FacialFeatureLabel featureId={row.feature_id} fallbackName={row.display_name} /> : <div className="flex items-center gap-2">
                           <span className="font-semibold text-gray-900">{t("features." + row.feature_id + ".name", row.display_name)}</span>
                           {row.tooltip && (
                             <HelpTooltip
@@ -1495,8 +1518,10 @@ const DataModalityView = ({
                               </button>
                             </HelpTooltip>
                           )}
-                        </div>
-                        <div className="text-xs text-gray-500">{t("features." + row.feature_id + ".unit", row.unit)}</div>
+                        </div>}
+                        <div className="text-xs text-gray-500">{modality === 'facial'
+                          ? t(`features.${row.feature_id}.unit`, { defaultValue: row.unit, nsSeparator: false })
+                          : t("features." + row.feature_id + ".unit", row.unit)}</div>
                       </td>
                       <td className="p-4 text-center text-gray-700">{patientStr}</td>
                       <td className="p-4 text-center text-gray-700">{refStr}</td>
@@ -1539,7 +1564,9 @@ const DataModalityView = ({
 
                   return (
                     <tr key={row.feature_id} className={index === 0 ? 'border-t border-gray-100' : ''}>
-                      <td className="p-4 text-gray-700">{t("features." + row.feature_id + ".name", row.display_name)}</td>
+                      <td className="p-4 text-gray-700">{modality === 'facial'
+                        ? t(`features.${row.feature_id}.name`, { defaultValue: row.display_name, nsSeparator: false })
+                        : t("features." + row.feature_id + ".name", row.display_name)}</td>
                       <td className="p-4 text-center text-gray-700 font-semibold">{closestGroupDisplay}</td>
                     </tr>
                   );
@@ -1549,7 +1576,7 @@ const DataModalityView = ({
           </div>
 
           {/* Pairwise Comparison Matrix */}
-          <div className="mt-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          {ENABLE_PAIRWISE_GROUP_COMPARISONS && <div className="mt-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <h4 className="text-sm font-bold text-gray-900 mb-2">{t('facialView.pairwiseHeading')}</h4>
             <div className="text-xs text-gray-500 mb-4">{t('facialView.pairwiseTitle')}</div>
             <div className="max-w-sm mb-4">
@@ -1619,7 +1646,7 @@ const DataModalityView = ({
                 </tbody>
               </table>
             </div>
-          </div>
+          </div>}
         </details>
       </div>
     );
@@ -1745,7 +1772,7 @@ const DataModalityView = ({
         <section className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
             <h3 className="text-lg font-bold text-gray-900">{t('learning.exampleReferencePatternsTitle')}</h3>
-            <div className="flex items-center gap-3">
+            <div className={`flex ${modality === 'facial' ? 'flex-wrap ' : ''}items-center gap-3`}>
               {/* Reference Group Select */}
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-gray-700">{t('referenceGroup.title')}:</span>
@@ -1780,7 +1807,7 @@ const DataModalityView = ({
             </div>
           </div>
           <Prose className="text-sm text-gray-600 mb-6">
-            {t('learning.exampleReferencePatternsDesc')}
+            {t(modality === 'facial' ? 'facialView.examplesDescription' : 'learning.exampleReferencePatternsDesc')}
           </Prose>
 
           {/* Facial Signal Dropdown (if Facial) */}
@@ -1800,6 +1827,8 @@ const DataModalityView = ({
             </div>
           )}
 
+          {modality === 'facial' && <Prose className="mb-4 text-sm text-gray-600 leading-relaxed">{t('facialView.signalHelp')}</Prose>}
+
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-3">
               <div className="text-sm font-semibold text-gray-900">{leftLabel}</div>
@@ -1814,9 +1843,9 @@ const DataModalityView = ({
               </div>
             </div>
           </div>
-          <div className="mt-6 p-3 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-800">
+          {modality !== 'facial' && <div className="mt-6 p-3 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-800">
             <ExplainedText>{t('learning.noteBox')}</ExplainedText>
-          </div>
+          </div>}
         </section>
 
         <section id={interpretationSectionId} aria-labelledby={interpretationTitleId} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
@@ -1832,7 +1861,11 @@ const DataModalityView = ({
             </div>
           </div>
           <div className="mt-6 space-y-3">
-            {content.alerts.map((alert) => (
+            {content.alerts.map((alert) => modality === 'facial' ? (
+              <InterpretationNote key={alert}>
+                <Prose>{alert}</Prose>
+              </InterpretationNote>
+            ) : (
               <div key={alert} className="flex items-start gap-3 p-4 bg-orange-50/50 rounded-lg border border-orange-100">
                 <AlertTriangle className="text-orange-500 shrink-0 mt-0.5" size={18} />
                 <Prose className="text-sm text-orange-800">{alert}</Prose>
@@ -1853,15 +1886,15 @@ const DataModalityView = ({
           </div>
         </section>
 
-        <section className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-gray-900 mb-3">{t('learning.dataCollectionTitle', 'Data Collection')}</h3>
-          <Prose className="text-sm text-gray-700 leading-relaxed">{content.dataCollection}</Prose>
+        <section id={modality === 'facial' ? 'learning-facial-measurements' : undefined} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+          <h3 id={modality === 'facial' ? 'learning-facial-measurements-title' : undefined} tabIndex={modality === 'facial' ? -1 : undefined} className="scroll-mt-4 text-lg font-bold text-gray-900 mb-3 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-600">{t('learning.dataCollectionTitle', 'Data Collection')}</h3>
+          <Prose className={`text-sm text-gray-700 leading-relaxed${modality === 'facial' ? ' whitespace-pre-line' : ''}`}>{content.dataCollection}</Prose>
         </section>
 
         {/* Group Statistics Summary */}
         <section className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
           <h3 className="text-lg font-bold text-gray-900 mb-3">{t('learning.groupStatsTitle', 'Group Statistics Summary')}</h3>
-          <div className="overflow-x-auto rounded-xl border border-gray-100">
+          {modality === 'facial' ? <FacialGroupStatistics rows={statsForModality} /> : <div className="overflow-x-auto rounded-xl border border-gray-100">
             <table className="w-full text-xs text-left">
               <thead>
                 <tr className="bg-gray-50 text-gray-500 border-b border-gray-100">
@@ -1902,11 +1935,11 @@ const DataModalityView = ({
                 })}
               </tbody>
             </table>
-          </div>
+          </div>}
         </section>
 
         {/* Pairwise Comparison Matrix */}
-        <section className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+        {ENABLE_PAIRWISE_GROUP_COMPARISONS && <section className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
           <div className="text-sm font-bold text-gray-900 mb-3">{t('facialView.pairwiseTitle')}</div>
           <div className="max-w-sm mb-4">
             <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">{t('facialView.pairwiseFeatureLabel')}</div>
@@ -1975,7 +2008,7 @@ const DataModalityView = ({
               </tbody>
             </table>
           </div>
-        </section>
+        </section>}
       </div>
     );
   };
@@ -2146,12 +2179,14 @@ export default function App() {
   }, [routeState.route, routeState.modality, activeToken]);
 
   React.useEffect(() => {
-    if (routeState.route === 'learning' && routeState.modality === 'overview' && window.location.hash === '#learning-process-title') {
-      const heading = document.getElementById('learning-process-title');
+    const targetId = routeState.modality === 'overview' ? 'learning-process-title'
+      : routeState.modality === 'facial' ? 'learning-facial-measurements-title' : null;
+    if (routeState.route === 'learning' && targetId && window.location.hash === `#${targetId}`) {
+      const heading = document.getElementById(targetId);
       heading?.focus({ preventScroll: true });
       heading?.scrollIntoView({ behavior: 'auto', block: 'start' });
     }
-  }, [routeState]);
+  }, [routeState, activeMode]);
 
   const patientCaseId = activeToken ? PATIENT_TOKENS[activeToken] : null;
   const patientData = patientCaseId ? PATIENTS[patientCaseId] : null;
@@ -2539,6 +2574,12 @@ export default function App() {
                 gender={gender}
                 setGender={setGender}
                 patientData={patientData!}
+                learningMeasurementsHref={`${activeToken ? `/${activeToken}` : ''}/learning/facial#learning-facial-measurements-title`}
+                onOpenLearningMeasurements={() => {
+                  setActiveMode('learning');
+                  setRoutePath('learning', 'facial');
+                  window.history.replaceState({}, '', `${window.location.pathname}#learning-facial-measurements-title`);
+                }}
               />
               : <DataAssessmentView activeMode={activeMode} patientData={patientData!} />
           ) : (
