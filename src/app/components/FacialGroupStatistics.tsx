@@ -16,9 +16,16 @@ type FacialStatisticsRow = {
   groups: Partial<Record<string, GroupStatistics>>;
 };
 const groups = ['control', 'asc', 'adhd', 'sad', 'mdd'] as const;
+const helpEntries = ['meanSd', 'medianIqr', 'n', 'variability'] as const;
 
 export function FacialGroupStatistics({ rows }: { rows: FacialStatisticsRow[] }) {
+  return <GroupStatisticsSummary rows={rows} modality="facial" />;
+}
+
+/** Shared table-reading presentation; the supplied rows remain unfiltered. */
+export function GroupStatisticsSummary({ rows, modality }: { rows: FacialStatisticsRow[]; modality: 'facial' | 'mimicry' | 'gaze' | 'head' | 'vocal' }) {
   const { t } = useTranslation();
+  const helpKey = `${modality}View.groupStats`;
   // A common count must be supplied for every displayed feature; zero is valid.
   const commonCounts = Object.fromEntries(groups.map(group => {
     const counts = rows.map(row => row.groups[group]?.valid_n);
@@ -28,18 +35,18 @@ export function FacialGroupStatistics({ rows }: { rows: FacialStatisticsRow[] })
   }));
 
   return <>
-    <Prose className="mb-3 text-sm text-gray-700 leading-relaxed">{t('facialView.groupStats.introduction')}</Prose>
-    <Prose className="mb-2 text-sm text-gray-600 leading-relaxed">{t('facialView.groupStats.populationUnknown')}</Prose>
-    <Prose className="mb-4 text-sm text-gray-600 leading-relaxed">{t('facialView.groupStats.filtersIndependent')}</Prose>
+    <Prose className="mb-3 text-sm text-gray-700 leading-relaxed">{t(`${helpKey}.introduction`)}</Prose>
+    <Prose className="mb-2 text-sm text-gray-600 leading-relaxed">{t('groupTableHelp.populationUnknown')}</Prose>
+    <Prose className="mb-4 text-sm text-gray-600 leading-relaxed">{t('groupTableHelp.filtersIndependent')}</Prose>
     <details className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
-      <summary className="cursor-pointer font-semibold rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600">{t('facialView.groupStats.helpTitle')}</summary>
-      <div className="mt-3 space-y-2 leading-relaxed">
-        <Prose>{t('facialView.groupStats.legend.meanSd')}</Prose>
-        <Prose>{t('facialView.groupStats.legend.medianIqr')}</Prose>
-        <Prose>{t('facialView.groupStats.legend.n')}</Prose>
-        <Prose>{t('facialView.groupStats.legend.variability')}</Prose>
-      </div>
-      <Prose className="mt-3 leading-relaxed"><strong>{t('facialView.groupStats.exampleLabel')} </strong>{t('facialView.groupStats.example')}</Prose>
+      <summary className="cursor-pointer font-semibold rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600">{t('groupTableHelp.title')}</summary>
+      <dl className="mt-3 space-y-3 leading-relaxed">
+        {helpEntries.map(entry => <div key={entry}>
+          <dt className="font-semibold">{t(`groupTableHelp.${entry}.title`)}</dt>
+          <dd className="mt-1"><Prose>{t(`groupTableHelp.${entry}.body`)}</Prose></dd>
+        </div>)}
+      </dl>
+      {modality === 'facial' && <Prose className="mt-3 leading-relaxed"><strong>{t(`${helpKey}.exampleLabel`)} </strong>{t(`${helpKey}.example`)}</Prose>}
     </details>
     <div className="overflow-x-auto rounded-xl border border-gray-100">
       <table className="w-full min-w-[720px] text-sm text-left">
@@ -65,7 +72,7 @@ export function FacialGroupStatistics({ rows }: { rows: FacialStatisticsRow[] })
               if (!stats) return <td key={group} className="p-3 text-center text-gray-500">–</td>;
               return <td key={group} className="p-3 text-center text-gray-700">
                 <div className="font-semibold whitespace-nowrap">{stats.mean.toFixed(2)} ± {stats.std.toFixed(2)}</div>
-                <div className="mt-1 text-gray-600">{t('facialView.groupStats.medianLabel')}: {stats.median.toFixed(2)} ({stats.iqr.toFixed(2)})</div>
+                <div className="mt-1 text-gray-600">{t('groupTableHelp.medianLabel')}: {stats.median.toFixed(2)} ({stats.iqr.toFixed(2)})</div>
                 {commonCounts[group] === undefined && <div className="mt-1 text-gray-600">n = {stats.valid_n ?? '–'}</div>}
               </td>;
             })}

@@ -14,7 +14,7 @@ import {
   ShieldCheck,
   Smile,
   Stethoscope,
-  Theater
+  UsersRound
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
@@ -42,7 +42,8 @@ import { modalityData } from '../data/modalityData';
 import { LearningOverview } from './components/LearningOverview';
 import { LearningSectionLink } from './components/LearningSectionLink';
 import { FacialFeatureLabel } from './components/FacialFeatureLabel';
-import { FacialGroupStatistics } from './components/FacialGroupStatistics';
+import { CaseTableReadingHelp } from './components/CaseTableReadingHelp';
+import { GroupStatisticsSummary } from './components/FacialGroupStatistics';
 import { Prose, ExplainedText, ExpandedAbbreviations } from './components/AbbreviationHelp';
 import { HelpTooltip } from './components/HelpTooltip';
 import { InterpretationNote } from './components/InterpretationNote';
@@ -1169,6 +1170,7 @@ const DataModalityView = ({
   const label = t(`modalities.${modality}.label`);
   const description = t(`modalities.${modality}.description`);
   const data = modality === 'overview' ? null : modalityData[modality] as any;
+  const hasMeasurementGuide = modality === 'facial' || modality === 'mimicry' || modality === 'gaze' || modality === 'head' || modality === 'vocal';
   const [facialSignal, setFacialSignal] = useState<'smile' | 'disgust' | 'all'>('smile');
   const [pairwiseFeature, setPairwiseFeature] = useState<string>('');
 
@@ -1290,7 +1292,7 @@ const DataModalityView = ({
   };
 
   const renderInterpretabilityFootnote = () => {
-    if (modality === 'facial') {
+    if (hasMeasurementGuide) {
       return <a
         href={learningMeasurementsHref}
         onClick={event => {
@@ -1299,18 +1301,14 @@ const DataModalityView = ({
           onOpenLearningMeasurements();
         }}
         className="mt-4 inline-block text-sm text-teal-700 underline underline-offset-4 hover:text-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
-      >{t('facialView.learningLink')}</a>;
+      >{t('referenceGroup.learningMeasurementsLink')}</a>;
     }
-    const title = modality === 'mimicry'
-        ? t('mimicryView.computationTitle')
-        : modality === 'gaze'
+    const title = modality === 'gaze'
           ? t('gazeView.computationTitle')
           : modality === 'vocal'
             ? t('vocalView.computationTitle')
             : t('referenceGroup.howComputed');
-    const body = modality === 'mimicry'
-        ? t('mimicryView.computationBody')
-        : modality === 'gaze'
+    const body = modality === 'gaze'
           ? t('gazeView.computationBody')
           : modality === 'vocal'
             ? t('vocalView.computationBody')
@@ -1341,6 +1339,14 @@ const DataModalityView = ({
       const orderB = typeof b.display_order === 'number' ? b.display_order : 999;
       return orderA - orderB;
     });
+
+    // Match availability to the three panels in the saved voice plot; zero is valid.
+    const voicePlotFeatureIds = ['voice::pitch_variability', 'voice::loudness_variability', 'voice::speech_rate'];
+    const unavailableVoicePlotFeatures = modality === 'vocal' ? voicePlotFeatureIds.filter(featureId => {
+      const value = sortedDeviations.find(row => row.feature_id === featureId)?.patient_value;
+      return typeof value !== 'number' || !Number.isFinite(value);
+    }) : [];
+    const voicePlotUnavailable = unavailableVoicePlotFeatures.length === voicePlotFeatureIds.length;
 
     if (sortedDeviations.length === 0) {
       return (
@@ -1416,14 +1422,6 @@ const DataModalityView = ({
       <div className="space-y-6">
         {renderFilters()}
 
-        {/* Modality Alert Box (if Gaze) */}
-        {modality === 'gaze' && (
-          <div className="rounded-lg border border-amber-100 bg-amber-50 p-4 text-sm text-amber-900 flex items-start gap-3">
-            <AlertTriangle className="text-amber-600 shrink-0 mt-0.5" size={16} />
-            <Prose>{t('gazeView.alertText')}</Prose>
-          </div>
-        )}
-
         {/* Visual Plot Card */}
         <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
           <div className={`flex ${modality === 'facial' ? 'flex-wrap ' : ''}items-start justify-between gap-4 mb-4`}>
@@ -1467,14 +1465,25 @@ const DataModalityView = ({
             <Prose>{t('facialView.caseDefinition')}</Prose>
             <Prose>{t('facialView.signalHelp')}</Prose>
           </div>}
+          {(modality === 'mimicry' || modality === 'gaze' || modality === 'head' || modality === 'vocal') && <Prose className="mb-4 text-sm text-gray-600 leading-relaxed">{t(`${modality}View.caseDefinition`)}</Prose>}
+          {unavailableVoicePlotFeatures.length > 0 && <div className="mb-4">
+            <InterpretationNote title={t(voicePlotUnavailable ? 'vocalView.unavailableTitle' : 'vocalView.partialUnavailableTitle')} headingAs="h3">
+              <Prose>{t(voicePlotUnavailable ? 'vocalView.unavailableNote' : 'vocalView.partialUnavailableNote')}</Prose>
+            </InterpretationNote>
+          </div>}
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
             <img
               src={getCaseImage(modality as Exclude<Modality, 'overview'>, referenceGroup, gender, modality === 'facial' ? facialSignal : undefined)}
-              alt={`${label} visualization`}
+              alt={t('referenceGroup.modalityPlotAlt', { modality: label })}
               className="w-full h-auto"
             />
           </div>
           {modality === 'facial' && <Prose className="mt-3 text-sm text-gray-600 leading-relaxed">{t('facialView.plotLegend')}</Prose>}
+          {(modality === 'mimicry' || modality === 'gaze' || modality === 'head') && <Prose className="mt-3 text-sm text-gray-600 leading-relaxed">{t(`${modality}View.plotLegend`)}</Prose>}
+          {modality === 'vocal' && <Prose className="mt-3 text-sm text-gray-600 leading-relaxed">{t(voicePlotUnavailable ? 'vocalView.unavailablePlotLegend' : 'vocalView.plotLegend')}</Prose>}
+          {modality === 'mimicry' && <Prose className="mt-2 text-xs text-gray-600 leading-relaxed">{t('mimicryView.qualityNote')}</Prose>}
+          {modality === 'gaze' && <div className="mt-3"><InterpretationNote><Prose>{t('gazeView.alertText')}</Prose></InterpretationNote></div>}
+          {(modality === 'head' || modality === 'vocal') && <div className="mt-3"><InterpretationNote><Prose>{t(`${modality}View.qualityNote`)}</Prose></InterpretationNote></div>}
         </div>
 
         {/* Feature Comparison Table */}
@@ -1484,7 +1493,8 @@ const DataModalityView = ({
             <Prose>{t('facialView.selectorTableNote')}</Prose>
             <Prose>{t('facialView.featureFamilies')}</Prose>
           </div>}
-          <div className={`${modality === 'facial' ? 'overflow-x-auto' : 'overflow-hidden'} rounded-xl border border-gray-100`}>
+          {(modality === 'gaze' || modality === 'head' || modality === 'vocal') && <Prose className="mb-4 text-sm text-gray-600 leading-relaxed">{t(`${modality}View.featureFamilies`)}</Prose>}
+          <div className={`${hasMeasurementGuide ? 'overflow-x-auto' : 'overflow-hidden'} rounded-xl border border-gray-100`}>
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 text-gray-500">
@@ -1506,7 +1516,7 @@ const DataModalityView = ({
                   return (
                     <tr key={row.feature_id} className={index === 0 ? 'border-t border-gray-100' : ''}>
                       <td className="p-4 text-gray-700 align-top">
-                        {modality === 'facial' ? <FacialFeatureLabel featureId={row.feature_id} fallbackName={row.display_name} /> : <div className="flex items-center gap-2">
+                        {hasMeasurementGuide ? <FacialFeatureLabel featureId={row.feature_id} fallbackName={row.display_name} /> : <div className="flex items-center gap-2">
                           <span className="font-semibold text-gray-900">{t("features." + row.feature_id + ".name", row.display_name)}</span>
                           {row.tooltip && (
                             <HelpTooltip
@@ -1519,7 +1529,7 @@ const DataModalityView = ({
                             </HelpTooltip>
                           )}
                         </div>}
-                        <div className="text-xs text-gray-500">{modality === 'facial'
+                        <div className="text-sm text-gray-500">{hasMeasurementGuide
                           ? t(`features.${row.feature_id}.unit`, { defaultValue: row.unit, nsSeparator: false })
                           : t("features." + row.feature_id + ".unit", row.unit)}</div>
                       </td>
@@ -1532,6 +1542,7 @@ const DataModalityView = ({
               </tbody>
             </table>
           </div>
+          {hasMeasurementGuide && <CaseTableReadingHelp />}
           {renderInterpretabilityFootnote()}
         </div>
 
@@ -1564,7 +1575,7 @@ const DataModalityView = ({
 
                   return (
                     <tr key={row.feature_id} className={index === 0 ? 'border-t border-gray-100' : ''}>
-                      <td className="p-4 text-gray-700">{modality === 'facial'
+                      <td className="p-4 text-gray-700">{(modality === 'facial' || modality === 'mimicry')
                         ? t(`features.${row.feature_id}.name`, { defaultValue: row.display_name, nsSeparator: false })
                         : t("features." + row.feature_id + ".name", row.display_name)}</td>
                       <td className="p-4 text-center text-gray-700 font-semibold">{closestGroupDisplay}</td>
@@ -1772,7 +1783,7 @@ const DataModalityView = ({
         <section className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
             <h3 className="text-lg font-bold text-gray-900">{t('learning.exampleReferencePatternsTitle')}</h3>
-            <div className={`flex ${modality === 'facial' ? 'flex-wrap ' : ''}items-center gap-3`}>
+            <div className={`flex ${hasMeasurementGuide ? 'flex-wrap ' : ''}items-center gap-3`}>
               {/* Reference Group Select */}
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-gray-700">{t('referenceGroup.title')}:</span>
@@ -1807,8 +1818,9 @@ const DataModalityView = ({
             </div>
           </div>
           <Prose className="text-sm text-gray-600 mb-6">
-            {t(modality === 'facial' ? 'facialView.examplesDescription' : 'learning.exampleReferencePatternsDesc')}
+            {t(hasMeasurementGuide ? `${modality}View.examplesDescription` : 'learning.exampleReferencePatternsDesc')}
           </Prose>
+          {(modality === 'mimicry' || modality === 'gaze' || modality === 'head' || modality === 'vocal') && <Prose className="mb-4 text-sm text-gray-600 leading-relaxed">{t(`${modality}View.learningPlotIntroduction`)}</Prose>}
 
           {/* Facial Signal Dropdown (if Facial) */}
           {modality === 'facial' && (
@@ -1833,17 +1845,17 @@ const DataModalityView = ({
             <div className="space-y-3">
               <div className="text-sm font-semibold text-gray-900">{leftLabel}</div>
               <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-                <img src={leftImage} alt="ASC group pattern example" className="w-full h-auto" />
+                <img src={leftImage} alt={t('learning.prototypeAscImageAlt', { modality: label })} className="w-full h-auto" />
               </div>
             </div>
             <div className="space-y-3">
               <div className="text-sm font-semibold text-gray-900">{rightLabel}</div>
               <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-                <img src={rightImage} alt="Reference group pattern example" className="w-full h-auto" />
+                <img src={rightImage} alt={t('learning.prototypeReferenceImageAlt', { modality: label, groupName: t(`referenceGroup.options.${referenceGroup}`) })} className="w-full h-auto" />
               </div>
             </div>
           </div>
-          {modality !== 'facial' && <div className="mt-6 p-3 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-800">
+          {!hasMeasurementGuide && <div className="mt-6 p-3 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-800">
             <ExplainedText>{t('learning.noteBox')}</ExplainedText>
           </div>}
         </section>
@@ -1858,10 +1870,11 @@ const DataModalityView = ({
             <div>
               <div className="text-xs uppercase tracking-widest text-gray-400 font-bold">{t('learning.interpretationLabel')}</div>
               <Prose className="mt-2">{content.interpretation}</Prose>
+              {modality === 'mimicry' && <Prose className="mt-3"><strong>{t('mimicryView.readingExampleLabel')} </strong>{t('mimicryView.readingExample')}</Prose>}
             </div>
           </div>
           <div className="mt-6 space-y-3">
-            {content.alerts.map((alert) => modality === 'facial' ? (
+            {content.alerts.map((alert) => hasMeasurementGuide ? (
               <InterpretationNote key={alert}>
                 <Prose>{alert}</Prose>
               </InterpretationNote>
@@ -1886,56 +1899,25 @@ const DataModalityView = ({
           </div>
         </section>
 
-        <section id={modality === 'facial' ? 'learning-facial-measurements' : undefined} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-          <h3 id={modality === 'facial' ? 'learning-facial-measurements-title' : undefined} tabIndex={modality === 'facial' ? -1 : undefined} className="scroll-mt-4 text-lg font-bold text-gray-900 mb-3 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-600">{t('learning.dataCollectionTitle', 'Data Collection')}</h3>
-          <Prose className={`text-sm text-gray-700 leading-relaxed${modality === 'facial' ? ' whitespace-pre-line' : ''}`}>{content.dataCollection}</Prose>
+        <section id={hasMeasurementGuide ? `learning-${modality}-measurements` : undefined} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+          <h3 id={hasMeasurementGuide ? `learning-${modality}-measurements-title` : undefined} tabIndex={hasMeasurementGuide ? -1 : undefined} className="scroll-mt-4 text-lg font-bold text-gray-900 mb-3 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-600">{t('learning.measurementsTitle')}</h3>
+          <Prose className={`text-sm text-gray-700 leading-relaxed${hasMeasurementGuide ? ' whitespace-pre-line' : ''}`}>{content.dataCollection}</Prose>
+          {hasMeasurementGuide && <details className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+            <summary className="cursor-pointer font-semibold rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600">{t('learning.methodsTitle')}</summary>
+            <Prose className="mt-3 leading-relaxed">{t(`${modality}View.methodsIntro`)}</Prose>
+            <dl className="mt-3 space-y-3">
+              {(t(`${modality}View.methodsItems`, { returnObjects: true }) as { title: string; body: string }[]).map(item => <div key={item.title}>
+                <dt className="font-semibold">{item.title}</dt>
+                <dd className="mt-1 leading-relaxed"><ExplainedText>{item.body}</ExplainedText></dd>
+              </div>)}
+            </dl>
+          </details>}
         </section>
 
         {/* Group Statistics Summary */}
         <section className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
           <h3 className="text-lg font-bold text-gray-900 mb-3">{t('learning.groupStatsTitle', 'Group Statistics Summary')}</h3>
-          {modality === 'facial' ? <FacialGroupStatistics rows={statsForModality} /> : <div className="overflow-x-auto rounded-xl border border-gray-100">
-            <table className="w-full text-xs text-left">
-              <thead>
-                <tr className="bg-gray-50 text-gray-500 border-b border-gray-100">
-                  <th className="p-3 font-semibold">{t('assessment.table.feature')}</th>
-                  <th className="p-3 font-semibold text-center">{t('assessment.table.control')}</th>
-                  <th className="p-3 font-semibold text-center">{t('assessment.table.asc')}</th>
-                  <th className="p-3 font-semibold text-center">{t('assessment.table.adhd')}</th>
-                  <th className="p-3 font-semibold text-center">{t('assessment.table.sad')}</th>
-                  <th className="p-3 font-semibold text-center">{t('assessment.table.depression')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {statsForModality.map((feat: any) => {
-                  const getGroupStatsCell = (groupKey: string) => {
-                    const g = feat.groups[groupKey];
-                    if (!g) return <td key={groupKey} className="p-3 text-center text-gray-400">-</td>;
-                    return (
-                      <td key={groupKey} className="p-3 text-center text-gray-700">
-                        <div className="font-semibold">{g.mean.toFixed(2)} ± {g.std.toFixed(2)}</div>
-                        <div className="text-[10px] text-gray-500">Med: {g.median.toFixed(2)} ({g.iqr.toFixed(2)})</div>
-                        <div className="text-[9px] text-gray-400 font-medium">n = {g.valid_n}</div>
-                      </td>
-                    );
-                  };
-                  return (
-                    <tr key={feat.feature_id} className="hover:bg-gray-50/55 transition-colors">
-                      <td className="p-3 text-gray-900 font-medium max-w-xs">
-                        <div className="font-semibold">{t("features." + feat.feature_id + ".name", feat.display_name)}</div>
-                        <div className="text-[10px] text-gray-500">{t("features." + feat.feature_id + ".unit", feat.unit)}</div>
-                      </td>
-                      {getGroupStatsCell('control')}
-                      {getGroupStatsCell('asc')}
-                      {getGroupStatsCell('adhd')}
-                      {getGroupStatsCell('sad')}
-                      {getGroupStatsCell('mdd')}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>}
+          <GroupStatisticsSummary rows={statsForModality} modality={modality as Exclude<Modality, 'overview'>} />
         </section>
 
         {/* Pairwise Comparison Matrix */}
@@ -2180,7 +2162,7 @@ export default function App() {
 
   React.useEffect(() => {
     const targetId = routeState.modality === 'overview' ? 'learning-process-title'
-      : routeState.modality === 'facial' ? 'learning-facial-measurements-title' : null;
+      : routeState.modality === 'facial' || routeState.modality === 'mimicry' || routeState.modality === 'gaze' || routeState.modality === 'head' || routeState.modality === 'vocal' ? `learning-${routeState.modality}-measurements-title` : null;
     if (routeState.route === 'learning' && targetId && window.location.hash === `#${targetId}`) {
       const heading = document.getElementById(targetId);
       heading?.focus({ preventScroll: true });
@@ -2234,7 +2216,7 @@ export default function App() {
     {
       id: 'mimicry',
       label: t('modalities.mimicry.label'),
-      icon: Theater,
+      icon: UsersRound,
       desc: t('modalities.mimicry.description'),
     },
     {
@@ -2574,11 +2556,11 @@ export default function App() {
                 gender={gender}
                 setGender={setGender}
                 patientData={patientData!}
-                learningMeasurementsHref={`${activeToken ? `/${activeToken}` : ''}/learning/facial#learning-facial-measurements-title`}
+                learningMeasurementsHref={`${activeToken ? `/${activeToken}` : ''}/learning/${activeModality}#learning-${activeModality}-measurements-title`}
                 onOpenLearningMeasurements={() => {
                   setActiveMode('learning');
-                  setRoutePath('learning', 'facial');
-                  window.history.replaceState({}, '', `${window.location.pathname}#learning-facial-measurements-title`);
+                  setRoutePath('learning', activeModality);
+                  window.history.replaceState({}, '', `${window.location.pathname}#learning-${activeModality}-measurements-title`);
                 }}
               />
               : <DataAssessmentView activeMode={activeMode} patientData={patientData!} />
